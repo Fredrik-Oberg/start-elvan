@@ -1,0 +1,107 @@
+{
+  "app": {
+    "title": "Start-Elvan",
+    "subtitle": "Fotbollsuppställning"
+  },
+  "nav": {
+    "roster": "Trupp",
+    "matches": "Matcher",
+    "lineups": "Uppställningar",
+    "traits": "Egenskaper"
+  },
+  "roster": {
+    "title": "Spelartripp",
+    "addPlayer": "Lägg till spelare",
+    "editPlayer": "Redigera spelare",
+    "deletePlayer": "Ta bort spelare",
+    "deleteConfirm": "Är du säker på att du vill ta bort {{name}}?",
+    "importPlayers": "Importera spelare",
+    "name": "Namn",
+    "number": "Nummer",
+    "traits": "Egenskaper",
+    "noPlayers": "Inga spelare ännu. Lägg till din första spelare!",
+    "search": "Sök spelare..."
+  },
+  "traits": {
+    "title": "Hantera egenskaper",
+    "addTrait": "Lägg till egenskap",
+    "editTrait": "Redigera egenskap",
+    "deleteTrait": "Ta bort egenskap",
+    "label": "Etikett",
+    "color": "Färg",
+    "noTraits": "Inga egenskaper definierade. Lägg till din första!"
+  },
+  "matches": {
+    "title": "Matcher",
+    "addMatch": "Lägg till match",
+    "editMatch": "Redigera match",
+    "deleteMatch": "Ta bort match",
+    "deleteConfirm": "Är du säker på att du vill ta bort matchen mot {{opponent}}?",
+    "opponent": "Motståndare",
+    "date": "Datum",
+    "startTime": "Starttid",
+    "endTime": "Sluttid",
+    "location": "Plats",
+    "noMatches": "Inga matcher schemalagda. Lägg till din första match!",
+    "createLineup": "Skapa uppställning"
+  },
+  "lineup": {
+    "title": "Uppställningsbyggare",
+    "availablePlayers": "Tillgängliga spelare",
+    "onPitch": "På plan",
+    "bench": "Bänken",
+    "conflict": "Spelaren är tilldelad en överlappande match",
+    "save": "Spara uppställning",
+    "saved": "Uppställning sparad!",
+    "share": "Dela uppställning",
+    "shareLink": "Delningslänk",
+    "linkCopied": "Länk kopierad till urklipp!",
+    "usersViewing": "{{count}} användare tittar",
+    "filterByTrait": "Filtrera efter egenskap",
+    "noPlayers": "Inga spelare tillgängliga",
+    "dragHint": "Dra spelare till planen",
+    "unavailable": "Spelaren är otillgänglig (skadad/annat)"
+  },
+  "import": {
+    "title": "Importera spelare",
+    "selectFile": "Välj fil",
+    "supportedFormats": "Format som stöds: CSV, JSON",
+    "csvFormat": "CSV-format: namn, nummer, egenskap1, egenskap2, ...",
+    "jsonFormat": "JSON-format: [{\"name\": \"...\", \"number\": 1, \"traits\": [...]}]",
+    "preview": "Förhandsgranska",
+    "importing": "Importerar...",
+    "success": "{{count}} spelare importerade!",
+    "error": "Fel vid import: {{message}}"
+  },
+  "common": {
+    "save": "Spara",
+    "cancel": "Avbryt",
+    "delete": "Ta bort",
+    "edit": "Redigera",
+    "close": "Stäng",
+    "confirm": "Bekräfta",
+    "loading": "Laddar...",
+    "error": "Något gick fel",
+    "language": "Språk"
+  },
+  "unavailability": {
+    "title": "Otillgänglighet",
+    "current": "Aktuella otillgängligheter",
+    "addNew": "Lägg till ny otillgänglighet",
+    "reason": "Anledning",
+    "reasons": {
+      "injured": "Skadad",
+      "sick": "Sjuk",
+      "personal": "Personligt",
+      "other": "Annat"
+    },
+    "startDate": "Startdatum",
+    "endDate": "Slutdatum",
+    "startTime": "Starttid",
+    "endTime": "Sluttid",
+    "wholeDay": "Hela dagen",
+    "note": "Anteckning",
+    "add": "Lägg till otillgänglighet",
+    "noEntries": "Inga otillgängligheter registrerade"
+  }
+}

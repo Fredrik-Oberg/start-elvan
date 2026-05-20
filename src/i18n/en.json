@@ -1,0 +1,107 @@
+{
+  "app": {
+    "title": "Start-Elvan",
+    "subtitle": "Soccer Lineup Builder"
+  },
+  "nav": {
+    "roster": "Roster",
+    "matches": "Matches",
+    "lineups": "Lineups",
+    "traits": "Traits"
+  },
+  "roster": {
+    "title": "Player Roster",
+    "addPlayer": "Add Player",
+    "editPlayer": "Edit Player",
+    "deletePlayer": "Delete Player",
+    "deleteConfirm": "Are you sure you want to delete {{name}}?",
+    "importPlayers": "Import Players",
+    "name": "Name",
+    "number": "Number",
+    "traits": "Traits",
+    "noPlayers": "No players yet. Add your first player!",
+    "search": "Search players..."
+  },
+  "traits": {
+    "title": "Manage Traits",
+    "addTrait": "Add Trait",
+    "editTrait": "Edit Trait",
+    "deleteTrait": "Delete Trait",
+    "label": "Label",
+    "color": "Color",
+    "noTraits": "No traits defined. Add your first trait!"
+  },
+  "matches": {
+    "title": "Matches",
+    "addMatch": "Add Match",
+    "editMatch": "Edit Match",
+    "deleteMatch": "Delete Match",
+    "deleteConfirm": "Are you sure you want to delete match vs {{opponent}}?",
+    "opponent": "Opponent",
+    "date": "Date",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "location": "Location",
+    "noMatches": "No matches scheduled. Add your first match!",
+    "createLineup": "Create Lineup"
+  },
+  "lineup": {
+    "title": "Lineup Builder",
+    "availablePlayers": "Available Players",
+    "onPitch": "On Pitch",
+    "bench": "Bench",
+    "conflict": "Player is assigned to an overlapping match",
+    "save": "Save Lineup",
+    "saved": "Lineup saved!",
+    "share": "Share Lineup",
+    "shareLink": "Share Link",
+    "linkCopied": "Link copied to clipboard!",
+    "usersViewing": "{{count}} user(s) viewing",
+    "filterByTrait": "Filter by trait",
+    "noPlayers": "No players available",
+    "dragHint": "Drag players onto the pitch",
+    "unavailable": "Player is unavailable (injured/other)"
+  },
+  "import": {
+    "title": "Import Players",
+    "selectFile": "Select File",
+    "supportedFormats": "Supported formats: CSV, JSON",
+    "csvFormat": "CSV format: name, number, trait1, trait2, ...",
+    "jsonFormat": "JSON format: [{\"name\": \"...\", \"number\": 1, \"traits\": [...]}]",
+    "preview": "Preview",
+    "importing": "Importing...",
+    "success": "Successfully imported {{count}} players!",
+    "error": "Error importing file: {{message}}"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "language": "Language"
+  },
+  "unavailability": {
+    "title": "Unavailability",
+    "current": "Current unavailabilities",
+    "addNew": "Add new unavailability",
+    "reason": "Reason",
+    "reasons": {
+      "injured": "Injured",
+      "sick": "Sick",
+      "personal": "Personal",
+      "other": "Other"
+    },
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "wholeDay": "Whole day",
+    "note": "Note",
+    "add": "Add Unavailability",
+    "noEntries": "No unavailabilities recorded"
+  }
+}
