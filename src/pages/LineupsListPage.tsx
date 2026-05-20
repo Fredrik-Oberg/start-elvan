@@ -5,11 +5,11 @@ import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardActionArea from '@mui/material/CardActionArea';
-import Grid from '@mui/material/Grid';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useMatches } from '../hooks/useMatches';
 import { useAllLineups } from '../hooks/useLineup';
+import { Grid2 } from '@mui/material';
 
 export default function LineupsListPage() {
   const { t } = useTranslation();
@@ -41,9 +41,9 @@ export default function LineupsListPage() {
           No lineups created yet. Go to Matches and create a lineup for a match.
         </Typography>
       ) : (
-        <Grid container spacing={2}>
+        <Grid2 container spacing={2}>
           {lineupsWithMatch.map((lineup) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={lineup.id}>
+            <Grid2 size={{ xs: 12, sm: 6, md: 4 }} key={lineup.id}>
               <Card>
                 <CardActionArea onClick={() => navigate(`/lineup/${lineup.matchId}`)}>
                   <CardContent>
@@ -72,9 +72,9 @@ export default function LineupsListPage() {
                   </CardContent>
                 </CardActionArea>
               </Card>
-            </Grid>
+            </Grid2>
           ))}
-        </Grid>
+        </Grid2>
       )}
     </Box>
   );

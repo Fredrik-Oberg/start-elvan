@@ -14,18 +14,15 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Chip from '@mui/material/Chip';
-import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import Button from '@mui/material/Button';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import ShareIcon from '@mui/icons-material/Share';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CircularProgress from '@mui/material/CircularProgress';
 import { usePlayers } from '../hooks/usePlayers';
 import { useTraits } from '../hooks/useTraits';
@@ -105,7 +102,7 @@ export default function LineupPage() {
         if (!pitchRect) return;
 
         // Use the delta from dnd-kit to calculate position
-        const delta = event.delta;
+        // const delta = event.delta;
         const activeRect = event.active.rect.current.translated;
         if (!activeRect) return;
 
