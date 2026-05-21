@@ -1,12 +1,14 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   collection,
   onSnapshot,
   addDoc,
-  updateDoc,
   doc,
   query,
   where,
+  setDoc,
+  deleteDoc,
+  runTransaction,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useTeamId } from './useTeam';
@@ -15,9 +17,10 @@ import type { Lineup, LineupPlayer } from '../types';
 export function useLineup(matchId: string | null) {
   const teamId = useTeamId();
   const [lineup, setLineup] = useState<Lineup | null>(null);
+  const [positions, setPositions] = useState<LineupPlayer[]>([]);
   const [loading, setLoading] = useState(true);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Listen to the lineup document (metadata: bench, shared, etc.)
   useEffect(() => {
     if (!teamId || !matchId) {
       setLoading(false);
@@ -28,7 +31,7 @@ export function useLineup(matchId: string | null) {
     const unsub = onSnapshot(q, (snap) => {
       if (snap.docs.length > 0) {
         const d = snap.docs[0];
-        setLineup({ id: d.id, ...d.data() } as Lineup);
+        setLineup({ id: d.id, ...d.data(), players: [] } as unknown as Lineup);
       } else {
         setLineup(null);
       }
@@ -37,62 +40,134 @@ export function useLineup(matchId: string | null) {
     return unsub;
   }, [teamId, matchId]);
 
+  // Listen to per-player position sub-documents
+  useEffect(() => {
+    if (!teamId || !lineup?.id) return;
+    const posCol = collection(db, 'teams', teamId, 'lineups', lineup.id, 'positions');
+    const unsub = onSnapshot(posCol, (snap) => {
+      const data = snap.docs.map((d) => ({
+        playerId: d.id,
+        x: d.data().x,
+        y: d.data().y,
+      } as LineupPlayer));
+      setPositions(data);
+    });
+    return unsub;
+  }, [teamId, lineup?.id]);
+
+  // Merge positions into lineup for consumers
+  const lineupWithPlayers = lineup ? { ...lineup, players: positions } : null;
+
   const createLineup = async (matchId: string): Promise<string> => {
     const col = collection(db, 'teams', teamId, 'lineups');
     const docRef = await addDoc(col, {
       matchId,
-      players: [],
       bench: [],
       shared: false,
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      version: 1,
     });
     return docRef.id;
   };
 
-  const updateLineup = useCallback(
-    (data: Partial<Lineup>) => {
+  const setPlayerPosition = useCallback(
+    async (playerId: string, x: number, y: number) => {
       if (!lineup) return;
-      // Debounce saves
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(async () => {
-        const ref = doc(db, 'teams', teamId, 'lineups', lineup.id);
-        await updateDoc(ref, { ...data, updatedAt: Date.now() });
-      }, 500);
+      const posRef = doc(db, 'teams', teamId, 'lineups', lineup.id, 'positions', playerId);
+      await setDoc(posRef, { x, y, updatedAt: Date.now() });
+    },
+    [lineup, teamId]
+  );
+
+  const removePlayerFromPitch = useCallback(
+    async (playerId: string) => {
+      if (!lineup) return;
+      const posRef = doc(db, 'teams', teamId, 'lineups', lineup.id, 'positions', playerId);
+      await deleteDoc(posRef);
     },
     [lineup, teamId]
   );
 
   const setPlayers = useCallback(
-    (players: LineupPlayer[]) => {
+    async (players: LineupPlayer[]) => {
       if (!lineup) return;
-      setLineup((prev) => (prev ? { ...prev, players } : null));
-      updateLineup({ players });
+      // Determine added, updated, and removed players
+      const newIds = new Set(players.map((p) => p.playerId));
+
+      // Remove players no longer on pitch
+      for (const pos of positions) {
+        if (!newIds.has(pos.playerId)) {
+          await removePlayerFromPitch(pos.playerId);
+        }
+      }
+      // Add/update positions
+      for (const p of players) {
+        const existing = positions.find((e) => e.playerId === p.playerId);
+        if (!existing || existing.x !== p.x || existing.y !== p.y) {
+          await setPlayerPosition(p.playerId, p.x, p.y);
+        }
+      }
     },
-    [lineup, updateLineup]
+    [lineup, positions, setPlayerPosition, removePlayerFromPitch]
   );
 
   const setBench = useCallback(
-    (bench: string[]) => {
+    async (bench: string[]) => {
       if (!lineup) return;
-      setLineup((prev) => (prev ? { ...prev, bench } : null));
-      updateLineup({ bench });
+      const ref = doc(db, 'teams', teamId, 'lineups', lineup.id);
+      await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(ref);
+        if (!snap.exists()) return;
+        const currentVersion = snap.data().version || 0;
+        transaction.update(ref, { bench, updatedAt: Date.now(), version: currentVersion + 1 });
+      });
     },
-    [lineup, updateLineup]
+    [lineup, teamId]
   );
 
   const toggleShared = useCallback(async () => {
     if (!lineup) return;
     const ref = doc(db, 'teams', teamId, 'lineups', lineup.id);
-    await updateDoc(ref, { shared: !lineup.shared, updatedAt: Date.now() });
+    await runTransaction(db, async (transaction) => {
+      const snap = await transaction.get(ref);
+      if (!snap.exists()) return;
+      const data = snap.data();
+      transaction.update(ref, {
+        shared: !data.shared,
+        updatedAt: Date.now(),
+        version: (data.version || 0) + 1,
+      });
+    });
   }, [lineup, teamId]);
 
+  const updateLineup = useCallback(
+    async (data: Partial<Lineup>) => {
+      if (!lineup) return;
+      const ref = doc(db, 'teams', teamId, 'lineups', lineup.id);
+      await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(ref);
+        if (!snap.exists()) return;
+        const currentVersion = snap.data().version || 0;
+        const { players, ...rest } = data;
+        // If players are included, handle via sub-docs
+        if (players) {
+          await setPlayers(players);
+        }
+        transaction.update(ref, { ...rest, updatedAt: Date.now(), version: currentVersion + 1 });
+      });
+    },
+    [lineup, teamId, setPlayers]
+  );
+
   return {
-    lineup,
+    lineup: lineupWithPlayers,
     loading,
     createLineup,
     updateLineup,
     setPlayers,
+    setPlayerPosition,
+    removePlayerFromPitch,
     setBench,
     toggleShared,
   };

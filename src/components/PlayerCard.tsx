@@ -36,7 +36,7 @@ export default function PlayerCard({ player, traits }: PlayerCardProps) {
           flexShrink: 0,
         }}
       >
-        {player.number}
+        {player.name.charAt(0).toUpperCase()}
       </Box>
       <Box overflow="hidden">
         <Typography variant="body2" fontWeight="bold" noWrap>

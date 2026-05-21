@@ -6,46 +6,86 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
 import Chip from '@mui/material/Chip';
 import Box from '@mui/material/Box';
-import OutlinedInput from '@mui/material/OutlinedInput';
+import Autocomplete from '@mui/material/Autocomplete';
 import type { Player, Trait } from '../types';
+
+interface TraitOption {
+  id: string;
+  label: string;
+  color: string;
+  isNew?: boolean;
+}
 
 interface PlayerDialogProps {
   open: boolean;
   player: Player | null;
   traits: Trait[];
   onClose: () => void;
-  onSave: (data: Omit<Player, 'id' | 'createdAt'>) => void;
+  onSave: (data: Omit<Player, 'id' | 'createdAt' | 'version'>) => void;
+  onCreateTrait?: (data: Omit<Trait, 'id'>) => Promise<void>;
 }
 
-export default function PlayerDialog({ open, player, traits, onClose, onSave }: PlayerDialogProps) {
+const DEFAULT_COLORS = ['#2196f3', '#4caf50', '#ff9800', '#e91e63', '#9c27b0', '#00bcd4', '#ff5722', '#607d8b'];
+
+export default function PlayerDialog({ open, player, traits, onClose, onSave, onCreateTrait }: PlayerDialogProps) {
   const { t } = useTranslation();
   const [name, setName] = useState('');
-  const [number, setNumber] = useState<number>(0);
-  const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
+  const [selectedTraits, setSelectedTraits] = useState<TraitOption[]>([]);
 
   useEffect(() => {
     if (player) {
       setName(player.name);
-      setNumber(player.number);
-      setSelectedTraits(player.traits);
+      setSelectedTraits(
+        player.traits
+          .map((id) => traits.find((t) => t.id === id))
+          .filter(Boolean)
+          .map((t) => ({ id: t!.id, label: t!.label, color: t!.color }))
+      );
     } else {
       setName('');
-      setNumber(0);
       setSelectedTraits([]);
     }
   }, [player, open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Resolve pending trait IDs when traits list updates from Firestore
+  useEffect(() => {
+    setSelectedTraits((prev) =>
+      prev.map((opt) => {
+        if (opt.isNew) {
+          const found = traits.find((t) => t.label.toLowerCase() === opt.label.toLowerCase());
+          if (found) return { id: found.id, label: found.label, color: found.color };
+        }
+        return opt;
+      })
+    );
+  }, [traits]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    onSave({ name: name.trim(), number, traits: selectedTraits });
+
+    // Resolve trait IDs — pending traits should have been created already via onChange
+    // Find their real IDs by matching labels against the latest traits list
+    const traitIds: string[] = [];
+    for (const opt of selectedTraits) {
+      if (opt.isNew) {
+        const found = traits.find((t) => t.label.toLowerCase() === opt.label.toLowerCase());
+        if (found) traitIds.push(found.id);
+      } else {
+        traitIds.push(opt.id);
+      }
+    }
+
+    onSave({ name: name.trim(), traits: traitIds });
   };
+
+  const traitOptions: TraitOption[] = traits.map((t) => ({
+    id: t.id,
+    label: t.label,
+    color: t.color,
+  }));
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -62,51 +102,64 @@ export default function PlayerDialog({ open, player, traits, onClose, onSave }: 
               required
               autoFocus
             />
-            <TextField
-              label={t('roster.number')}
-              type="number"
-              value={number}
-              onChange={(e) => setNumber(parseInt(e.target.value) || 0)}
-              inputProps={{ min: 0, max: 99 }}
+            <Autocomplete
+              multiple
+              freeSolo
+              options={traitOptions}
+              value={selectedTraits}
+              getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
+              isOptionEqualToValue={(opt, val) => opt.id === val.id}
+              onChange={async (_e, newValue) => {
+                const processed: TraitOption[] = [];
+                for (const item of newValue) {
+                  if (typeof item === 'string') {
+                    // User typed a new trait name and pressed Enter
+                    const existing = traits.find(
+                      (t) => t.label.toLowerCase() === item.toLowerCase()
+                    );
+                    if (existing) {
+                      processed.push({ id: existing.id, label: existing.label, color: existing.color });
+                    } else if (onCreateTrait) {
+                      const color = DEFAULT_COLORS[traits.length % DEFAULT_COLORS.length];
+                      await onCreateTrait({ label: item, color });
+                      // Trait will appear via real-time listener; add placeholder
+                      processed.push({ id: `pending-${item}`, label: item, color, isNew: true });
+                    }
+                  } else {
+                    processed.push(item);
+                  }
+                }
+                setSelectedTraits(processed);
+              }}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    {...getTagProps({ index })}
+                    key={option.id}
+                    label={option.label}
+                    size="small"
+                    sx={{ backgroundColor: option.color, color: '#fff' }}
+                  />
+                ))
+              }
+              renderOption={(props, option) => (
+                <li {...props} key={option.id}>
+                  <Chip
+                    size="small"
+                    label={option.label}
+                    sx={{ backgroundColor: option.color, color: '#fff', mr: 1 }}
+                  />
+                  {option.label}
+                </li>
+              )}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={t('roster.traits')}
+                  placeholder={t('traits.createInline')}
+                />
+              )}
             />
-            <FormControl>
-              <InputLabel>{t('roster.traits')}</InputLabel>
-              <Select
-                multiple
-                value={selectedTraits}
-                onChange={(e) => setSelectedTraits(e.target.value as string[])}
-                input={<OutlinedInput label={t('roster.traits')} />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((id) => {
-                      const trait = traits.find((t) => t.id === id);
-                      return (
-                        <Chip
-                          key={id}
-                          label={trait?.label || id}
-                          size="small"
-                          sx={{
-                            backgroundColor: trait?.color || '#999',
-                            color: '#fff',
-                          }}
-                        />
-                      );
-                    })}
-                  </Box>
-                )}
-              >
-                {traits.map((trait) => (
-                  <MenuItem key={trait.id} value={trait.id}>
-                    <Chip
-                      size="small"
-                      label={trait.label}
-                      sx={{ backgroundColor: trait.color, color: '#fff', mr: 1 }}
-                    />
-                    {trait.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
           </Box>
         </DialogContent>
         <DialogActions>

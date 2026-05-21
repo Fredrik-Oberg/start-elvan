@@ -18,13 +18,12 @@ import type { Player, Trait } from '../types';
 interface ImportDialogProps {
   open: boolean;
   onClose: () => void;
-  onImport: (players: Omit<Player, 'id' | 'createdAt'>[]) => Promise<void>;
+  onImport: (players: Omit<Player, 'id' | 'createdAt' | 'version'>[]) => Promise<void>;
   traits: Trait[];
 }
 
 interface ParsedPlayer {
   name: string;
-  number: number;
   traits: string[];
 }
 
@@ -62,7 +61,6 @@ export default function ImportDialog({ open, onClose, onImport, traits }: Import
     if (!Array.isArray(data)) throw new Error('JSON must be an array');
     const players: ParsedPlayer[] = data.map((item) => ({
       name: String(item.name || ''),
-      number: Number(item.number) || 0,
       traits: resolveTraits(item.traits || []),
     }));
     setParsed(players);
@@ -76,8 +74,7 @@ export default function ImportDialog({ open, onClose, onImport, traits }: Import
         const parts = line.split(',').map((s) => s.trim());
         return {
           name: parts[0] || '',
-          number: parseInt(parts[1]) || 0,
-          traits: resolveTraits(parts.slice(2)),
+          traits: resolveTraits(parts.slice(1)),
         };
       });
     setParsed(players);
@@ -149,7 +146,6 @@ export default function ImportDialog({ open, onClose, onImport, traits }: Import
               <TableHead>
                 <TableRow>
                   <TableCell>{t('roster.name')}</TableCell>
-                  <TableCell>{t('roster.number')}</TableCell>
                   <TableCell>{t('roster.traits')}</TableCell>
                 </TableRow>
               </TableHead>
@@ -157,7 +153,6 @@ export default function ImportDialog({ open, onClose, onImport, traits }: Import
                 {parsed.slice(0, 20).map((p, i) => (
                   <TableRow key={i}>
                     <TableCell>{p.name}</TableCell>
-                    <TableCell>{p.number}</TableCell>
                     <TableCell>{p.traits.length} traits</TableCell>
                   </TableRow>
                 ))}

@@ -3,11 +3,11 @@ import {
   collection,
   onSnapshot,
   addDoc,
-  updateDoc,
   deleteDoc,
   doc,
   query,
   orderBy,
+  runTransaction,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useTeamId } from './useTeam';
@@ -30,14 +30,19 @@ export function useMatches() {
     return unsub;
   }, [teamId]);
 
-  const addMatch = async (match: Omit<Match, 'id' | 'createdAt'>) => {
+  const addMatch = async (match: Omit<Match, 'id' | 'createdAt' | 'version'>) => {
     const col = collection(db, 'teams', teamId, 'matches');
-    await addDoc(col, { ...match, createdAt: Date.now() });
+    await addDoc(col, { ...match, createdAt: Date.now(), version: 1 });
   };
 
   const updateMatch = async (id: string, data: Partial<Match>) => {
     const ref = doc(db, 'teams', teamId, 'matches', id);
-    await updateDoc(ref, data);
+    await runTransaction(db, async (transaction) => {
+      const snap = await transaction.get(ref);
+      if (!snap.exists()) throw new Error('Match not found');
+      const currentVersion = snap.data().version || 0;
+      transaction.update(ref, { ...data, version: currentVersion + 1 });
+    });
   };
 
   const deleteMatch = async (id: string) => {

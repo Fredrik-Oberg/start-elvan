@@ -13,12 +13,19 @@ import ListItemText from '@mui/material/ListItemText';
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import Tooltip from '@mui/material/Tooltip';
 import MenuIcon from '@mui/icons-material/Menu';
 import GroupIcon from '@mui/icons-material/Group';
 import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import LabelIcon from '@mui/icons-material/Label';
 import LanguageIcon from '@mui/icons-material/Language';
+import ShareIcon from '@mui/icons-material/Share';
+import PeopleIcon from '@mui/icons-material/People';
+import { getShareUrl } from '../hooks/useTeam';
+import { usePresence } from '../hooks/usePresence';
 
 const DRAWER_WIDTH = 240;
 
@@ -32,12 +39,19 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [langAnchor, setLangAnchor] = useState<null | HTMLElement>(null);
+  const [shareSnackOpen, setShareSnackOpen] = useState(false);
+  const { activeUsers } = usePresence();
+
+  const handleShareTeam = async () => {
+    const url = getShareUrl();
+    await navigator.clipboard.writeText(url);
+    setShareSnackOpen(true);
+  };
 
   const navItems = [
-    { label: t('nav.roster'), path: '/', icon: <GroupIcon /> },
+    { label: t('nav.myTeam'), path: '/', icon: <GroupIcon /> },
     { label: t('nav.matches'), path: '/matches', icon: <SportsSoccerIcon /> },
     { label: t('nav.lineups'), path: '/lineups', icon: <ViewListIcon /> },
-    { label: t('nav.traits'), path: '/traits', icon: <LabelIcon /> },
   ];
 
   const handleLanguageChange = (lang: string) => {
@@ -90,6 +104,19 @@ export default function Layout({ children }: LayoutProps) {
           <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
             {t('app.title')} — {t('app.subtitle')}
           </Typography>
+          {activeUsers > 1 && (
+            <Tooltip title={t('share.activeUsers', { count: activeUsers })}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mr: 1, color: 'inherit' }}>
+                <PeopleIcon fontSize="small" sx={{ mr: 0.5 }} />
+                <Typography variant="body2">{activeUsers}</Typography>
+              </Box>
+            </Tooltip>
+          )}
+          <Tooltip title={t('share.team')}>
+            <IconButton color="inherit" onClick={handleShareTeam}>
+              <ShareIcon />
+            </IconButton>
+          </Tooltip>
           <IconButton color="inherit" onClick={(e) => setLangAnchor(e.currentTarget)}>
             <LanguageIcon />
           </IconButton>
@@ -151,6 +178,16 @@ export default function Layout({ children }: LayoutProps) {
       >
         {children}
       </Box>
+
+      <Snackbar
+        open={shareSnackOpen}
+        autoHideDuration={3000}
+        onClose={() => setShareSnackOpen(false)}
+      >
+        <Alert severity="success" onClose={() => setShareSnackOpen(false)}>
+          {t('share.linkCopied')}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

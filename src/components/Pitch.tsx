@@ -182,7 +182,6 @@ export default function Pitch({ players, allPlayers, traits, onDrop, onRemove }:
                 position: 'relative',
               }}
             >
-              {player.number}
               <IconButton
                 size="small"
                 onClick={(e) => {

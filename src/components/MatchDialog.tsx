@@ -13,7 +13,7 @@ interface MatchDialogProps {
   open: boolean;
   match: Match | null;
   onClose: () => void;
-  onSave: (data: Omit<Match, 'id' | 'createdAt'>) => void;
+  onSave: (data: Omit<Match, 'id' | 'createdAt' | 'version'>) => void;
 }
 
 export default function MatchDialog({ open, match, onClose, onSave }: MatchDialogProps) {

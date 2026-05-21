@@ -31,7 +31,7 @@ export default function MatchesPage() {
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Match | null>(null);
 
-  const handleSave = async (data: Omit<Match, 'id' | 'createdAt'>) => {
+  const handleSave = async (data: Omit<Match, 'id' | 'createdAt' | 'version'>) => {
     if (editingMatch) {
       await updateMatch(editingMatch.id, data);
     } else {

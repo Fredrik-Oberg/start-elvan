@@ -1,10 +1,10 @@
 export interface Player {
   id: string;
   name: string;
-  number: number;
   traits: string[]; // trait IDs
   avatarUrl?: string;
   createdAt: number;
+  version: number;
 }
 
 export interface Trait {
@@ -21,6 +21,7 @@ export interface Match {
   endTime: string; // HH:mm
   location?: string;
   createdAt: number;
+  version: number;
 }
 
 export interface LineupPlayer {
@@ -38,6 +39,7 @@ export interface Lineup {
   shared: boolean;
   createdAt: number;
   updatedAt: number;
+  version: number;
 }
 
 export type UnavailabilityReason = 'injured' | 'sick' | 'personal' | 'other';

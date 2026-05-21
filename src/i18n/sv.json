@@ -4,20 +4,21 @@
     "subtitle": "Fotbollsuppställning"
   },
   "nav": {
+    "myTeam": "Mitt lag",
     "roster": "Trupp",
     "matches": "Matcher",
     "lineups": "Uppställningar",
     "traits": "Egenskaper"
   },
   "roster": {
-    "title": "Spelartripp",
+    "title": "Spelartrupp",
     "addPlayer": "Lägg till spelare",
     "editPlayer": "Redigera spelare",
     "deletePlayer": "Ta bort spelare",
     "deleteConfirm": "Är du säker på att du vill ta bort {{name}}?",
     "importPlayers": "Importera spelare",
+    "exportPlayers": "Exportera CSV",
     "name": "Namn",
-    "number": "Nummer",
     "traits": "Egenskaper",
     "noPlayers": "Inga spelare ännu. Lägg till din första spelare!",
     "search": "Sök spelare..."
@@ -29,7 +30,8 @@
     "deleteTrait": "Ta bort egenskap",
     "label": "Etikett",
     "color": "Färg",
-    "noTraits": "Inga egenskaper definierade. Lägg till din första!"
+    "noTraits": "Inga egenskaper definierade. Lägg till din första!",
+    "createInline": "Skriv för att skapa ny..."
   },
   "matches": {
     "title": "Matcher",
@@ -66,12 +68,17 @@
     "title": "Importera spelare",
     "selectFile": "Välj fil",
     "supportedFormats": "Format som stöds: CSV, JSON",
-    "csvFormat": "CSV-format: namn, nummer, egenskap1, egenskap2, ...",
-    "jsonFormat": "JSON-format: [{\"name\": \"...\", \"number\": 1, \"traits\": [...]}]",
+    "csvFormat": "CSV-format: namn, egenskap1, egenskap2, ...",
+    "jsonFormat": "JSON-format: [{\"name\": \"...\", \"traits\": [...]}]",
     "preview": "Förhandsgranska",
     "importing": "Importerar...",
     "success": "{{count}} spelare importerade!",
     "error": "Fel vid import: {{message}}"
+  },
+  "share": {
+    "team": "Dela lag",
+    "linkCopied": "Laglänk kopierad! Dela den med andra för att samarbeta.",
+    "activeUsers": "{{count}} användare online"
   },
   "common": {
     "save": "Spara",

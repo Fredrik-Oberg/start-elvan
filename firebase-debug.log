@@ -1989,3 +1989,58 @@ INFO: Detected non-HTTP/2 connection.
     at Console.log (/home/s4269f/.local/node24/lib/node_modules/firebase-tools/node_modules/winston/lib/winston/transports/console.js:87:23)
     at Console._write (/home/s4269f/.local/node24/lib/node_modules/firebase-tools/node_modules/winston-transport/modern.js:103:17)
     at doWrite (/home/s4269f/.local/node24/lib/node_modules/firebase-tools/node_modules/winston-transport/node_modules/readable-stream/lib/_stream_writable.js:390:139)
+[debug] [2026-05-21T07:51:52.528Z] ----------------------------------------------------------------------
+[debug] [2026-05-21T07:51:52.530Z] Command:       C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\firebase-tools\lib\bin\firebase.js emulators:start --import=./firebase-data --export-on-exit=./firebase-data
+[debug] [2026-05-21T07:51:52.530Z] CLI Version:   13.8.2
+[debug] [2026-05-21T07:51:52.530Z] Platform:      win32
+[debug] [2026-05-21T07:51:52.530Z] Node Version:  v22.16.0
+[debug] [2026-05-21T07:51:52.530Z] Time:          Thu May 21 2026 09:51:52 GMT+0200 (centraleuropeisk sommartid)
+[debug] [2026-05-21T07:51:52.531Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-05-21T07:51:52.552Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-05-21T07:51:52.681Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-05-21T07:51:52.681Z] > authorizing via signed-in user (fredrikoberg85@gmail.com)
+[debug] [2026-05-21T07:51:53.417Z] java version "22.0.1" 2024-04-16
+Java(TM) SE Runtime Environment (build 22.0.1+8-16)
+
+[debug] [2026-05-21T07:51:53.418Z] Java HotSpot(TM) 64-Bit Server VM (build 22.0.1+8-16, mixed mode, sharing)
+
+[debug] [2026-05-21T07:51:53.494Z] Parsed Java major version: 22
+[info] i  emulators: Starting emulators: firestore {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: firestore"}}
+[debug] [2026-05-21T07:51:53.514Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-05-21T07:51:53.514Z] [firestore] Firestore Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-05-21T07:51:53.514Z] [firestore.websocket] websocket server for firestore only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-05-21T07:51:53.514Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"firestore":[{"address":"127.0.0.1","family":"IPv4","port":8088}],"firestore.websocket":[{"address":"127.0.0.1","family":"IPv4","port":9150}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2026-05-21T07:51:53.521Z] [hub] writing locator at C:\Users\s4269f\AppData\Local\Temp\hub-start-elvan-local.json
+[debug] [2026-05-21T07:51:53.540Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"firestore"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2026-05-21T07:51:53.540Z] Ignoring unsupported arg: single_project_mode_error {"metadata":{"emulator":{"name":"firestore"},"message":"Ignoring unsupported arg: single_project_mode_error"}}
+[debug] [2026-05-21T07:51:53.540Z] Starting Firestore Emulator with command {"binary":"java","args":["-Dgoogle.cloud_firestore.debug_log_level=FINE","-Duser.language=en","-jar","C:\\Users\\s4269f\\.cache\\firebase\\emulators\\cloud-firestore-emulator-v1.19.6.jar","--host","127.0.0.1","--port",8088,"--websocket_port",9150,"--project_id","start-elvan-local","--rules","C:\\WS\\github.com\\start-elvan\\firestore.rules","--single_project_mode",true],"optionalArgs":["port","webchannel_port","host","rules","websocket_port","functions_emulator","seed_from_export","project_id","single_project_mode"],"joinArgs":false,"shell":false} {"metadata":{"emulator":{"name":"firestore"},"message":"Starting Firestore Emulator with command {\"binary\":\"java\",\"args\":[\"-Dgoogle.cloud_firestore.debug_log_level=FINE\",\"-Duser.language=en\",\"-jar\",\"C:\\\\Users\\\\s4269f\\\\.cache\\\\firebase\\\\emulators\\\\cloud-firestore-emulator-v1.19.6.jar\",\"--host\",\"127.0.0.1\",\"--port\",8088,\"--websocket_port\",9150,\"--project_id\",\"start-elvan-local\",\"--rules\",\"C:\\\\WS\\\\github.com\\\\start-elvan\\\\firestore.rules\",\"--single_project_mode\",true],\"optionalArgs\":[\"port\",\"webchannel_port\",\"host\",\"rules\",\"websocket_port\",\"functions_emulator\",\"seed_from_export\",\"project_id\",\"single_project_mode\"],\"joinArgs\":false,\"shell\":false}"}}
+[info] i  firestore: Firestore Emulator logging to firestore-debug.log {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator logging to \u001b[1mfirestore-debug.log\u001b[22m"}}
+[info] +  firestore: Firestore Emulator UI websocket is running on 9150. {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator UI websocket is running on 9150."}}
+[debug] [2026-05-21T07:52:00.150Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"ui"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2026-05-21T07:52:00.150Z] Ignoring unsupported arg: port {"metadata":{"emulator":{"name":"ui"},"message":"Ignoring unsupported arg: port"}}
+[debug] [2026-05-21T07:52:00.150Z] Starting Emulator UI with command {"binary":"node","args":["C:\\Users\\s4269f\\.cache\\firebase\\emulators\\ui-v1.11.8\\server\\server.mjs"],"optionalArgs":[],"joinArgs":false,"shell":false} {"metadata":{"emulator":{"name":"ui"},"message":"Starting Emulator UI with command {\"binary\":\"node\",\"args\":[\"C:\\\\Users\\\\s4269f\\\\.cache\\\\firebase\\\\emulators\\\\ui-v1.11.8\\\\server\\\\server.mjs\"],\"optionalArgs\":[],\"joinArgs\":false,\"shell\":false}"}}
+[info] i  ui: Emulator UI logging to ui-debug.log {"metadata":{"emulator":{"name":"ui"},"message":"Emulator UI logging to \u001b[1mui-debug.log\u001b[22m"}}
+[debug] [2026-05-21T07:52:00.957Z] Web / API server started at 127.0.0.1:4000
+ {"metadata":{"emulator":{"name":"ui"},"message":"Web / API server started at 127.0.0.1:4000\n"}}
+[debug] [2026-05-21T07:52:00.958Z] Web / API server started at ::1:4000
+ {"metadata":{"emulator":{"name":"ui"},"message":"Web / API server started at ::1:4000\n"}}
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4000/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌───────────┬────────────────┬─────────────────────────────────┐
+│ Emulator  │ Host:Port      │ View in Emulator UI             │
+├───────────┼────────────────┼─────────────────────────────────┤
+│ Firestore │ 127.0.0.1:8088 │ http://127.0.0.1:4000/firestore │
+└───────────┴────────────────┴─────────────────────────────────┘
+  Emulator Hub running at 127.0.0.1:4400
+  Other reserved ports: 4500, 9150
+
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+[debug] [2026-05-21T07:52:13.794Z] *** [apiv2] error from fetch(https://firebase-public.firebaseio.com/cli.json, {"headers":{},"method":"GET","agent":{"_events":{},"_eventsCount":2,"options":{"noDelay":true,"path":null},"requests":{},"sockets":{"firebase-public.firebaseio.com:443:::::::::::::::::::::":[]},"freeSockets":{},"keepAliveMsecs":1000,"keepAlive":false,"maxSockets":null,"maxFreeSockets":256,"scheduling":"lifo","maxTotalSockets":null,"totalSocketCount":0,"cache":{"max":20,"maxSize":0,"maxEntrySize":0,"fetchMethod":null,"keyMap":{},"keyList":["https:+http://wss.sebank.se:8080",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"valList":[{"_events":{},"_eventsCount":2,"options":{},"requests":{},"sockets":{"firebase-public.firebaseio.com:443:::::::::::::::::::::":[]},"freeSockets":{},"keepAliveMsecs":1000,"keepAlive":false,"maxSockets":null,"maxFreeSockets":256,"scheduling":"lifo","maxTotalSockets":null,"totalSocketCount":0,"proxy":"http://wss.sebank.se:8080/","proxyHeaders":{},"connectOpts":{"ALPNProtocols":["http/1.1"],"host":"wss.sebank.se","port":8080}},null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"next":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0},"prev":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0},"head":0,"tail":0,"free":{"heap":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0},"length":0},"initialFill":1,"size":1,"disposeAfter":null,"disposed":null,"noDisposeOnSet":false,"noUpdateTTL":false,"noDeleteOnFetchRejection":false,"allowStaleOnFetchRejection":false,"allowStaleOnFetchAbort":false,"ignoreFetchAbort":false,"allowStale":false,"noDeleteOnStaleGet":false,"updateAgeOnGet":false,"updateAgeOnHas":false,"ttlResolution":1,"ttlAutopurge":false,"ttl":0},"httpAgent":{"_events":{},"_eventsCount":2,"defaultPort":80,"protocol":"http:","options":{"noDelay":true,"path":null},"requests":{},"sockets":{},"freeSockets":{},"keepAliveMsecs":1000,"keepAlive":false,"maxSockets":null,"maxFreeSockets":256,"scheduling":"lifo","maxTotalSockets":null,"totalSocketCount":0},"httpsAgent":{"_events":{},"_eventsCount":2,"defaultPort":443,"protocol":"https:","options":{"noDelay":true,"path":null},"requests":{},"sockets":{},"freeSockets":{},"keepAliveMsecs":1000,"keepAlive":false,"maxSockets":null,"maxFreeSockets":256,"scheduling":"lifo","maxTotalSockets":null,"totalSocketCount":0,"maxCachedSessions":100,"_sessionCache":{"map":{},"list":[]}}}}): FetchError: request to https://firebase-public.firebaseio.com/cli.json failed, reason: connect ETIMEDOUT 172.21.69.142:8080
+[warn] !  Unable to fetch the CLI MOTD and remote config. This is not a fatal error, but may indicate an issue with your network connection. 
+[debug] [2026-05-21T07:52:13.795Z] Failed to fetch MOTD FirebaseError: Failed to make request to https://firebase-public.firebaseio.com/cli.json

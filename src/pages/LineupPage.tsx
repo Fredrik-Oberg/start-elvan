@@ -284,7 +284,7 @@ export default function LineupPage() {
                   return (
                     <Chip
                       key={playerId}
-                      label={`#${player.number} ${player.name}`}
+                      label={`${player.name}`}
                       onDelete={() => handleRemoveFromPitch(playerId)}
                     />
                   );

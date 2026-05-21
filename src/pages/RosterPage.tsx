@@ -47,8 +47,7 @@ export default function RosterPage() {
 
   const filteredPlayers = players.filter(
     (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.number.toString().includes(search)
+      p.name.toLowerCase().includes(search.toLowerCase())
   );
 
   const getTraitLabel = (traitId: string) => {
@@ -61,7 +60,7 @@ export default function RosterPage() {
     return trait?.color || '#999';
   };
 
-  const handleSavePlayer = async (data: Omit<Player, 'id' | 'createdAt'>) => {
+  const handleSavePlayer = async (data: Omit<Player, 'id' | 'createdAt' | 'version'>) => {
     if (editingPlayer) {
       await updatePlayer(editingPlayer.id, data);
     } else {
@@ -133,7 +132,7 @@ export default function RosterPage() {
                   <Box display="flex" justifyContent="space-between" alignItems="flex-start">
                     <Box>
                       <Typography variant="h6">
-                        #{player.number} {player.name}
+                        {player.name}
                         {isCurrentlyUnavailable(player.id) && (
                           <Chip
                             label={t('unavailability.reasons.' + (unavailabilities.find(u => u.playerId === player.id && u.startDate <= new Date().toISOString().split('T')[0] && u.endDate >= new Date().toISOString().split('T')[0])?.reason || 'other'))}
