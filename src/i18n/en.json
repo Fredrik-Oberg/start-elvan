@@ -46,7 +46,8 @@
     "endTime": "End Time",
     "location": "Location",
     "noMatches": "No matches scheduled. Add your first match!",
-    "createLineup": "Create Lineup"
+    "createLineup": "Create Lineup",
+    "endTimeError": "End time must be after start time"
   },
   "lineup": {
     "title": "Lineup Builder",
@@ -110,6 +111,7 @@
     "wholeDay": "Whole day",
     "note": "Note",
     "add": "Add Unavailability",
-    "noEntries": "No unavailabilities recorded"
+    "noEntries": "No unavailabilities recorded",
+    "endDateError": "End date must be on or after start date"
   }
 }

@@ -108,8 +108,11 @@ export function useLineup(matchId: string | null) {
           await setPlayerPosition(p.playerId, p.x, p.y);
         }
       }
+      // Keep playerIds denormalized on lineup doc for conflict detection across lineups
+      const lineupRef = doc(db, 'teams', teamId, 'lineups', lineup.id);
+      await setDoc(lineupRef, { playerIds: players.map((p) => p.playerId) }, { merge: true });
     },
-    [lineup, positions, setPlayerPosition, removePlayerFromPitch]
+    [lineup, positions, teamId, setPlayerPosition, removePlayerFromPitch]
   );
 
   const setBench = useCallback(

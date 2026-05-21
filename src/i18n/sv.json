@@ -45,7 +45,8 @@
     "endTime": "Sluttid",
     "location": "Plats",
     "noMatches": "Inga matcher schemalagda. Lägg till din första match!",
-    "createLineup": "Skapa uppställning"
+    "createLineup": "Skapa uppställning",
+    "endTimeError": "Sluttid måste vara efter starttid"
   },
   "lineup": {
     "title": "Uppställningsbyggare",
@@ -109,6 +110,7 @@
     "wholeDay": "Hela dagen",
     "note": "Anteckning",
     "add": "Lägg till otillgänglighet",
-    "noEntries": "Inga otillgängligheter registrerade"
+    "noEntries": "Inga otillgängligheter registrerade",
+    "endDateError": "Slutdatum måste vara samma som eller efter startdatum"
   }
 }

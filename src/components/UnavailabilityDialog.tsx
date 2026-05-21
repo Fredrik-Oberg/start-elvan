@@ -54,6 +54,8 @@ export default function UnavailabilityDialog({
   const [wholeDay, setWholeDay] = useState(true);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [dateError, setDateError] = useState('');
+  const [timeError, setTimeError] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -65,8 +67,46 @@ export default function UnavailabilityDialog({
       setWholeDay(true);
       setStartTime('');
       setEndTime('');
+      setDateError('');
+      setTimeError('');
     }
   }, [open]);
+
+  const validateDates = (start: string, end: string) => {
+    if (start && end && end < start) {
+      setDateError(t('unavailability.endDateError'));
+    } else {
+      setDateError('');
+    }
+  };
+
+  const validateTimes = (start: string, end: string) => {
+    if (start && end && end <= start) {
+      setTimeError(t('matches.endTimeError'));
+    } else {
+      setTimeError('');
+    }
+  };
+
+  const handleStartDateChange = (value: string) => {
+    setStartDate(value);
+    validateDates(value, endDate);
+  };
+
+  const handleEndDateChange = (value: string) => {
+    setEndDate(value);
+    validateDates(startDate, value);
+  };
+
+  const handleStartTimeChange = (value: string) => {
+    setStartTime(value);
+    validateTimes(value, endTime);
+  };
+
+  const handleEndTimeChange = (value: string) => {
+    setEndTime(value);
+    validateTimes(startTime, value);
+  };
 
   const playerUnavailabilities = unavailabilities.filter(
     (u) => u.playerId === player?.id
@@ -74,6 +114,7 @@ export default function UnavailabilityDialog({
 
   const handleAdd = () => {
     if (!player || !startDate || !endDate) return;
+    if (dateError || timeError) return;
     onAdd({
       playerId: player.id,
       reason,
@@ -160,19 +201,21 @@ export default function UnavailabilityDialog({
               label={t('unavailability.startDate')}
               type="date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={(e) => handleStartDateChange(e.target.value)}
               size="small"
               fullWidth
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true }, htmlInput: { lang: 'sv-SE' } }}
             />
             <TextField
               label={t('unavailability.endDate')}
               type="date"
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              onChange={(e) => handleEndDateChange(e.target.value)}
               size="small"
               fullWidth
-              slotProps={{ inputLabel: { shrink: true } }}
+              error={!!dateError}
+              helperText={dateError}
+              slotProps={{ inputLabel: { shrink: true }, htmlInput: { lang: 'sv-SE' } }}
             />
           </Box>
 
@@ -189,19 +232,21 @@ export default function UnavailabilityDialog({
                 label={t('unavailability.startTime')}
                 type="time"
                 value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
+                onChange={(e) => handleStartTimeChange(e.target.value)}
                 size="small"
                 fullWidth
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true }, htmlInput: { lang: 'sv-SE' } }}
               />
               <TextField
                 label={t('unavailability.endTime')}
                 type="time"
                 value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
+                onChange={(e) => handleEndTimeChange(e.target.value)}
                 size="small"
                 fullWidth
-                slotProps={{ inputLabel: { shrink: true } }}
+                error={!!timeError}
+                helperText={timeError}
+                slotProps={{ inputLabel: { shrink: true }, htmlInput: { lang: 'sv-SE' } }}
               />
             </Box>
           )}
@@ -215,7 +260,7 @@ export default function UnavailabilityDialog({
             rows={2}
           />
 
-          <Button variant="outlined" onClick={handleAdd} disabled={!startDate || !endDate}>
+          <Button variant="outlined" onClick={handleAdd} disabled={!startDate || !endDate || !!dateError || !!timeError}>
             {t('unavailability.add')}
           </Button>
         </Box>

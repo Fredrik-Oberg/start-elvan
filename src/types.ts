@@ -35,6 +35,7 @@ export interface Lineup {
   matchId: string;
   name?: string;
   players: LineupPlayer[];
+  playerIds?: string[]; // denormalized player IDs on pitch for cross-lineup conflict detection
   bench: string[]; // player IDs on bench
   shared: boolean;
   createdAt: number;

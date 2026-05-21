@@ -10,6 +10,8 @@ interface DraggablePlayerProps {
   traits: Trait[];
   disabled?: boolean;
   conflictMessage?: string;
+  selected?: boolean;
+  onSelect?: () => void;
 }
 
 export default function DraggablePlayer({
@@ -17,6 +19,8 @@ export default function DraggablePlayer({
   traits,
   disabled,
   conflictMessage,
+  selected,
+  onSelect,
 }: DraggablePlayerProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: player.id,
@@ -33,10 +37,14 @@ export default function DraggablePlayer({
       style={style}
       {...listeners}
       {...attributes}
+      onClick={!disabled ? onSelect : undefined}
       sx={{
         opacity: isDragging ? 0.5 : disabled ? 0.4 : 1,
         cursor: disabled ? 'not-allowed' : 'grab',
         position: 'relative',
+        borderRadius: 1,
+        outline: selected ? '2px solid #ffeb3b' : 'none',
+        outlineOffset: 2,
       }}
     >
       {disabled && conflictMessage && (

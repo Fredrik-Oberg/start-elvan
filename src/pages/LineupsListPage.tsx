@@ -55,13 +55,13 @@ export default function LineupsListPage() {
                     </Typography>
                     <Box mt={1}>
                       <Chip
-                        label={`${lineup.players.length} on pitch`}
+                        label={`${(lineup.players || []).length} on pitch`}
                         size="small"
                         color="primary"
                         sx={{ mr: 0.5 }}
                       />
                       <Chip
-                        label={`${lineup.bench.length} on bench`}
+                        label={`${(lineup.bench || []).length} on bench`}
                         size="small"
                         variant="outlined"
                       />

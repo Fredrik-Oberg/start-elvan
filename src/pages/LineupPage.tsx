@@ -9,6 +9,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
 } from '@dnd-kit/core';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -45,12 +46,15 @@ export default function LineupPage() {
   const { lineups } = useAllLineups();
   const { unavailabilities } = useUnavailability();
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [traitFilter, setTraitFilter] = useState<string>('');
   const [snackbar, setSnackbar] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
+
+  const { setNodeRef: setBenchRef, isOver: isBenchOver } = useDroppable({ id: 'bench' });
 
   const currentMatch = matches.find((m) => m.id === matchId);
 
@@ -155,6 +159,19 @@ export default function LineupPage() {
     [lineup, setPlayers, setBench]
   );
 
+  const handleTapToPlace = useCallback(
+    (x: number, y: number) => {
+      if (!lineup || !selectedPlayerId) return;
+      const newPlayers: LineupPlayer[] = lineup.players.filter((p) => p.playerId !== selectedPlayerId);
+      newPlayers.push({ playerId: selectedPlayerId, x, y });
+      const newBench = lineup.bench.filter((id) => id !== selectedPlayerId);
+      setPlayers(newPlayers);
+      if (newBench.length !== lineup.bench.length) setBench(newBench);
+      setSelectedPlayerId(null);
+    },
+    [lineup, selectedPlayerId, setPlayers, setBench]
+  );
+
   const handleShare = async () => {
     if (!lineup) return;
     await toggleShared();
@@ -252,6 +269,8 @@ export default function LineupPage() {
                       traits={traits}
                       disabled={disabled}
                       conflictMessage={message}
+                      selected={selectedPlayerId === player.id}
+                      onSelect={() => setSelectedPlayerId((prev) => prev === player.id ? null : player.id)}
                     />
                   );
                 })}
@@ -267,10 +286,13 @@ export default function LineupPage() {
               traits={traits}
               onDrop={handlePitchDrop}
               onRemove={handleRemoveFromPitch}
+              selectedPlayerId={selectedPlayerId}
+              selectedPlayerName={players.find((p) => p.id === selectedPlayerId)?.name}
+              onTapToPlace={handleTapToPlace}
             />
 
             {/* Bench */}
-            <Paper sx={{ mt: 2, p: 2 }}>
+            <Paper ref={setBenchRef} sx={{ mt: 2, p: 2, bgcolor: isBenchOver ? 'action.hover' : undefined }}>
               <Typography variant="subtitle2" gutterBottom>
                 {t('lineup.bench')}
               </Typography>

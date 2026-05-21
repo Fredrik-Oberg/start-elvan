@@ -23,6 +23,7 @@ export default function MatchDialog({ open, match, onClose, onSave }: MatchDialo
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [location, setLocation] = useState('');
+  const [timeError, setTimeError] = useState('');
 
   useEffect(() => {
     if (match) {
@@ -38,11 +39,31 @@ export default function MatchDialog({ open, match, onClose, onSave }: MatchDialo
       setEndTime('11:30');
       setLocation('');
     }
+    setTimeError('');
   }, [match, open]);
+
+  const validateTimes = (start: string, end: string) => {
+    if (start && end && end <= start) {
+      setTimeError(t('matches.endTimeError'));
+    } else {
+      setTimeError('');
+    }
+  };
+
+  const handleStartTimeChange = (value: string) => {
+    setStartTime(value);
+    validateTimes(value, endTime);
+  };
+
+  const handleEndTimeChange = (value: string) => {
+    setEndTime(value);
+    validateTimes(startTime, value);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!opponent.trim() || !date || !startTime || !endTime) return;
+    if (endTime <= startTime) return;
     onSave({
       opponent: opponent.trim(),
       date,
@@ -73,25 +94,27 @@ export default function MatchDialog({ open, match, onClose, onSave }: MatchDialo
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true }, htmlInput: { lang: 'sv-SE' } }}
             />
             <Box display="flex" gap={2}>
               <TextField
                 label={t('matches.startTime')}
                 type="time"
                 value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
+                onChange={(e) => handleStartTimeChange(e.target.value)}
                 required
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true }, htmlInput: { lang: 'sv-SE' } }}
                 fullWidth
               />
               <TextField
                 label={t('matches.endTime')}
                 type="time"
                 value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
+                onChange={(e) => handleEndTimeChange(e.target.value)}
                 required
-                slotProps={{ inputLabel: { shrink: true } }}
+                error={!!timeError}
+                helperText={timeError}
+                slotProps={{ inputLabel: { shrink: true }, htmlInput: { lang: 'sv-SE' } }}
                 fullWidth
               />
             </Box>
@@ -104,7 +127,7 @@ export default function MatchDialog({ open, match, onClose, onSave }: MatchDialo
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>{t('common.cancel')}</Button>
-          <Button type="submit" variant="contained">
+          <Button type="submit" variant="contained" disabled={!!timeError}>
             {t('common.save')}
           </Button>
         </DialogActions>

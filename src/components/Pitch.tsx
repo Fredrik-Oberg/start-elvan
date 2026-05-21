@@ -12,18 +12,24 @@ interface PitchProps {
   traits: Trait[];
   onDrop: (playerId: string, x: number, y: number) => void;
   onRemove: (playerId: string) => void;
+  selectedPlayerId?: string | null;
+  selectedPlayerName?: string;
+  onTapToPlace?: (x: number, y: number) => void;
 }
 
-export default function Pitch({ players, allPlayers, traits, onDrop, onRemove }: PitchProps) {
+export default function Pitch({ players, allPlayers, traits, onDrop, onRemove, selectedPlayerId, selectedPlayerName, onTapToPlace }: PitchProps) {
   const pitchRef = useRef<HTMLDivElement>(null);
   const { setNodeRef, isOver } = useDroppable({ id: 'pitch' });
 
   const handlePitchClick = useCallback(
-    (_e: React.MouseEvent) => {
-      // Only handle if we have the pitch element
-      if (!pitchRef.current) return;
+    (e: React.MouseEvent) => {
+      if (!pitchRef.current || !selectedPlayerId || !onTapToPlace) return;
+      const pitchRect = pitchRef.current.getBoundingClientRect();
+      const x = ((e.clientX - pitchRect.left) / pitchRect.width) * 100;
+      const y = ((e.clientY - pitchRect.top) / pitchRect.height) * 100;
+      onTapToPlace(Math.max(5, Math.min(95, x)), Math.max(5, Math.min(95, y)));
     },
-    []
+    [selectedPlayerId, onTapToPlace]
   );
 
   // Handle repositioning players already on pitch via mouse
@@ -37,12 +43,14 @@ export default function Pitch({ players, allPlayers, traits, onDrop, onRemove }:
       const startY = e.clientY;
       const player = players.find((p) => p.playerId === playerId);
       if (!player) return;
+      const startPlayerX = player.x;
+      const startPlayerY = player.y;
 
       const handleMove = (moveE: MouseEvent) => {
         const deltaX = ((moveE.clientX - startX) / pitchRect.width) * 100;
         const deltaY = ((moveE.clientY - startY) / pitchRect.height) * 100;
-        const newX = Math.max(5, Math.min(95, player.x + deltaX));
-        const newY = Math.max(5, Math.min(95, player.y + deltaY));
+        const newX = Math.max(5, Math.min(95, startPlayerX + deltaX));
+        const newY = Math.max(5, Math.min(95, startPlayerY + deltaY));
         onDrop(playerId, newX, newY);
       };
 
@@ -53,6 +61,39 @@ export default function Pitch({ players, allPlayers, traits, onDrop, onRemove }:
 
       document.addEventListener('mousemove', handleMove);
       document.addEventListener('mouseup', handleUp);
+    },
+    [players, onDrop]
+  );
+
+  // Handle repositioning players already on pitch via touch
+  const handlePlayerTouchDrag = useCallback(
+    (playerId: string, e: React.TouchEvent) => {
+      e.stopPropagation();
+      if (!pitchRef.current) return;
+      const pitchRect = pitchRef.current.getBoundingClientRect();
+      const touch = e.touches[0];
+      const startX = touch.clientX;
+      const startY = touch.clientY;
+      const player = players.find((p) => p.playerId === playerId);
+      if (!player) return;
+      const startPlayerX = player.x;
+      const startPlayerY = player.y;
+
+      const handleMove = (moveE: TouchEvent) => {
+        moveE.preventDefault();
+        const t = moveE.touches[0];
+        const deltaX = ((t.clientX - startX) / pitchRect.width) * 100;
+        const deltaY = ((t.clientY - startY) / pitchRect.height) * 100;
+        onDrop(playerId, Math.max(5, Math.min(95, startPlayerX + deltaX)), Math.max(5, Math.min(95, startPlayerY + deltaY)));
+      };
+
+      const handleEnd = () => {
+        document.removeEventListener('touchmove', handleMove);
+        document.removeEventListener('touchend', handleEnd);
+      };
+
+      document.addEventListener('touchmove', handleMove, { passive: false });
+      document.addEventListener('touchend', handleEnd);
     },
     [players, onDrop]
   );
@@ -68,15 +109,43 @@ export default function Pitch({ players, allPlayers, traits, onDrop, onRemove }:
       sx={{
         position: 'relative',
         width: '100%',
-        paddingTop: '66.67%', // 3:2 aspect ratio
+        paddingTop: { xs: '120%', md: '66.67%' },
         backgroundColor: '#2e7d32',
         borderRadius: 2,
-        border: isOver ? '3px dashed #fff' : '3px solid #1b5e20',
+        border: selectedPlayerId
+          ? '3px dashed #ffeb3b'
+          : isOver
+          ? '3px dashed #fff'
+          : '3px solid #1b5e20',
         overflow: 'hidden',
-        cursor: 'crosshair',
+        cursor: selectedPlayerId ? 'crosshair' : 'default',
         transition: 'border-color 0.2s',
       }}
     >
+      {/* Tap-to-place hint */}
+      {selectedPlayerId && selectedPlayerName && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 8,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'rgba(255, 235, 59, 0.92)',
+            color: '#000',
+            px: 2,
+            py: 0.5,
+            borderRadius: 2,
+            zIndex: 20,
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Typography variant="caption" fontWeight="bold">
+            Tap field to place {selectedPlayerName}
+          </Typography>
+        </Box>
+      )}
+
       {/* Pitch markings */}
       <Box
         sx={{
@@ -154,6 +223,8 @@ export default function Pitch({ players, allPlayers, traits, onDrop, onRemove }:
           <Box
             key={lp.playerId}
             onMouseDown={(e) => handlePlayerDrag(lp.playerId, e)}
+            onTouchStart={(e) => handlePlayerTouchDrag(lp.playerId, e)}
+            onClick={(e) => e.stopPropagation()}
             sx={{
               position: 'absolute',
               left: `${lp.x}%`,

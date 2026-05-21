@@ -25,10 +25,12 @@ export function getConflictingPlayerIds(
 
   for (const lineup of allLineups) {
     if (overlappingMatchIds.includes(lineup.matchId)) {
-      for (const lp of lineup.players) {
-        conflicting.add(lp.playerId);
+      // Use denormalized playerIds if available, otherwise fall back to players array
+      const pitchIds = lineup.playerIds ?? (lineup.players || []).map((p) => p.playerId);
+      for (const id of pitchIds) {
+        conflicting.add(id);
       }
-      for (const benchId of lineup.bench) {
+      for (const benchId of (lineup.bench || [])) {
         conflicting.add(benchId);
       }
     }
