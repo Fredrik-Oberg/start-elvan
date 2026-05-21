@@ -19,7 +19,7 @@ export default function Pitch({ players, allPlayers, traits, onDrop, onRemove }:
   const { setNodeRef, isOver } = useDroppable({ id: 'pitch' });
 
   const handlePitchClick = useCallback(
-    (e: React.MouseEvent) => {
+    (_e: React.MouseEvent) => {
       // Only handle if we have the pitch element
       if (!pitchRef.current) return;
     },

@@ -20,7 +20,6 @@ import MenuIcon from '@mui/icons-material/Menu';
 import GroupIcon from '@mui/icons-material/Group';
 import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
 import ViewListIcon from '@mui/icons-material/ViewList';
-import LabelIcon from '@mui/icons-material/Label';
 import LanguageIcon from '@mui/icons-material/Language';
 import ShareIcon from '@mui/icons-material/Share';
 import PeopleIcon from '@mui/icons-material/People';

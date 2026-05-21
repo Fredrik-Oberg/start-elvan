@@ -9,7 +9,7 @@ import CardContent from '@mui/material/CardContent';
 import CardActions from '@mui/material/CardActions';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
-import Grid from '@mui/material/Grid';
+import Grid2 from '@mui/material/Grid2';
 import Chip from '@mui/material/Chip';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -94,9 +94,9 @@ export default function MatchesPage() {
             <Typography variant="h6" color="text.secondary" gutterBottom>
               {date}
             </Typography>
-            <Grid container spacing={2}>
+            <Grid2 container spacing={2}>
               {dateMatches.map((match) => (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={match.id}>
+                <Grid2 size={{ xs: 12, sm: 6, md: 4 }} key={match.id}>
                   <Card>
                     <CardContent>
                       <Typography variant="h6">{match.opponent}</Typography>
@@ -137,9 +137,9 @@ export default function MatchesPage() {
                       </IconButton>
                     </CardActions>
                   </Card>
-                </Grid>
+                </Grid2>
               ))}
-            </Grid>
+            </Grid2>
           </Box>
         ))
       )}

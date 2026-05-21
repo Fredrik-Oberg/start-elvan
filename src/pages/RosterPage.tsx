@@ -9,7 +9,7 @@ import CardContent from '@mui/material/CardContent';
 import IconButton from '@mui/material/IconButton';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
-import Grid from '@mui/material/Grid';
+import Grid2 from '@mui/material/Grid2';
 import Tooltip from '@mui/material/Tooltip';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -124,9 +124,9 @@ export default function RosterPage() {
           {t('roster.noPlayers')}
         </Typography>
       ) : (
-        <Grid container spacing={2}>
+        <Grid2 container spacing={2}>
           {filteredPlayers.map((player) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={player.id}>
+            <Grid2 size={{ xs: 12, sm: 6, md: 4 }} key={player.id}>
               <Card sx={{ opacity: isCurrentlyUnavailable(player.id) ? 0.7 : 1 }}>
                 <CardContent>
                   <Box display="flex" justifyContent="space-between" alignItems="flex-start">
@@ -185,9 +185,9 @@ export default function RosterPage() {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
+            </Grid2>
           ))}
-        </Grid>
+        </Grid2>
       )}
 
       <PlayerDialog

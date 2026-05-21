@@ -8,7 +8,7 @@ import CardContent from '@mui/material/CardContent';
 import IconButton from '@mui/material/IconButton';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
-import Grid from '@mui/material/Grid';
+import Grid2 from '@mui/material/Grid2';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -71,9 +71,9 @@ export default function TraitsPage() {
           {t('traits.noTraits')}
         </Typography>
       ) : (
-        <Grid container spacing={2}>
+        <Grid2 container spacing={2}>
           {traits.map((trait) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={trait.id}>
+            <Grid2 size={{ xs: 12, sm: 6, md: 4 }} key={trait.id}>
               <Card>
                 <CardContent>
                   <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -106,9 +106,9 @@ export default function TraitsPage() {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
+            </Grid2>
           ))}
-        </Grid>
+        </Grid2>
       )}
 
       <TraitDialog
