@@ -63,7 +63,14 @@
     "filterByTrait": "Filtrera efter egenskap",
     "noPlayers": "Inga spelare tillgängliga",
     "dragHint": "Dra spelare till planen",
-    "unavailable": "Spelaren är otillgänglig (skadad/annat)"
+    "unavailable": "Spelaren är otillgänglig (skadad/annat)",
+    "toField": "Plan",
+    "toBench": "Bänk",
+    "tapToPlace": "Tryck på planen för att placera",
+    "benchEmpty": "Inga spelare på bänken. Använd Bänk-knappen.",
+    "name": "Uppställningsnamn",
+    "namePlaceholder": "t.ex. Huvuduppställning",
+    "rename": "Byt namn"
   },
   "import": {
     "title": "Importera spelare",
@@ -80,6 +87,9 @@
     "team": "Dela lag",
     "linkCopied": "Laglänk kopierad! Dela den med andra för att samarbeta.",
     "activeUsers": "{{count}} användare online"
+  },
+  "team": {
+    "namePlaceholder": "t.ex. Mitt lagnamn"
   },
   "common": {
     "save": "Spara",

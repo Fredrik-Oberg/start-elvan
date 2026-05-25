@@ -30,9 +30,10 @@ export function useTraits() {
     return unsub;
   }, [teamId]);
 
-  const addTrait = async (trait: Omit<Trait, 'id'>) => {
+  const addTrait = async (trait: Omit<Trait, 'id'>): Promise<string> => {
     const col = collection(db, 'teams', teamId, 'traits');
-    await addDoc(col, trait);
+    const ref = await addDoc(col, trait);
+    return ref.id;
   };
 
   const updateTrait = async (id: string, data: Partial<Trait>) => {

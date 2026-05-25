@@ -45,17 +45,17 @@ export default function LineupsListPage() {
           {lineupsWithMatch.map((lineup) => (
             <Grid2 size={{ xs: 12, sm: 6, md: 4 }} key={lineup.id}>
               <Card>
-                <CardActionArea onClick={() => navigate(`/lineup/${lineup.matchId}`)}>
+                <CardActionArea onClick={() => navigate(`/lineup/id/${lineup.id}`)}>
                   <CardContent>
                     <Typography variant="h6">
-                      vs {lineup.match?.opponent || 'Unknown'}
+                      {lineup.name || `vs ${lineup.match?.opponent || 'Unknown'}`}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {lineup.match?.date} • {lineup.match?.startTime}–{lineup.match?.endTime}
                     </Typography>
                     <Box mt={1}>
                       <Chip
-                        label={`${(lineup.players || []).length} on pitch`}
+                        label={`${(lineup.playerIds || []).length} on pitch`}
                         size="small"
                         color="primary"
                         sx={{ mr: 0.5 }}

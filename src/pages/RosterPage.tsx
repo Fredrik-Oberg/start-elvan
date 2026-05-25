@@ -9,8 +9,6 @@ import CardContent from '@mui/material/CardContent';
 import IconButton from '@mui/material/IconButton';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
-import Grid2 from '@mui/material/Grid2';
-import Tooltip from '@mui/material/Tooltip';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -29,7 +27,7 @@ import type { Player } from '../types';
 export default function RosterPage() {
   const { t } = useTranslation();
   const { players, loading, addPlayer, updatePlayer, deletePlayer } = usePlayers();
-  const { traits } = useTraits();
+  const { traits, addTrait } = useTraits();
   const { unavailabilities, addUnavailability, deleteUnavailability } = useUnavailability();
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -87,23 +85,44 @@ export default function RosterPage() {
 
   return (
     <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">{t('roster.title')}</Typography>
-        <Stack direction="row" spacing={1}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h5" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>{t('roster.title')}</Typography>
+        <Stack direction="row" spacing={0.5}>
+          <IconButton
+            color="primary"
+            onClick={() => setImportOpen(true)}
+            sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+          >
+            <FileUploadIcon />
+          </IconButton>
+          <IconButton
+            color="primary"
+            onClick={() => {
+              setEditingPlayer(null);
+              setDialogOpen(true);
+            }}
+            sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+          >
+            <AddIcon />
+          </IconButton>
           <Button
             variant="outlined"
+            size="small"
             startIcon={<FileUploadIcon />}
             onClick={() => setImportOpen(true)}
+            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
           >
             {t('roster.importPlayers')}
           </Button>
           <Button
             variant="contained"
+            size="small"
             startIcon={<AddIcon />}
             onClick={() => {
               setEditingPlayer(null);
               setDialogOpen(true);
             }}
+            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
           >
             {t('roster.addPlayer')}
           </Button>
@@ -115,7 +134,7 @@ export default function RosterPage() {
         placeholder={t('roster.search')}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        sx={{ mb: 3 }}
+        sx={{ mb: 2 }}
         size="small"
       />
 
@@ -124,70 +143,73 @@ export default function RosterPage() {
           {t('roster.noPlayers')}
         </Typography>
       ) : (
-        <Grid2 container spacing={2}>
+        <Stack spacing={1}>
           {filteredPlayers.map((player) => (
-            <Grid2 size={{ xs: 12, sm: 6, md: 4 }} key={player.id}>
-              <Card sx={{ opacity: isCurrentlyUnavailable(player.id) ? 0.7 : 1 }}>
-                <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                    <Box>
-                      <Typography variant="h6">
+            <Card key={player.id} sx={{ opacity: isCurrentlyUnavailable(player.id) ? 0.7 : 1 }}>
+              <CardContent sx={{ py: 1, px: 1.5, '&:last-child': { pb: 1 } }}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Box flex={1} minWidth={0}>
+                    <Box display="flex" alignItems="center" gap={0.5} flexWrap="wrap">
+                      <Typography variant="body1" fontWeight="bold" noWrap>
                         {player.name}
-                        {isCurrentlyUnavailable(player.id) && (
-                          <Chip
-                            label={t('unavailability.reasons.' + (unavailabilities.find(u => u.playerId === player.id && u.startDate <= new Date().toISOString().split('T')[0] && u.endDate >= new Date().toISOString().split('T')[0])?.reason || 'other'))}
-                            size="small"
-                            color="error"
-                            sx={{ ml: 1, verticalAlign: 'middle' }}
-                          />
-                        )}
                       </Typography>
-                      <Stack direction="row" spacing={0.5} mt={1} flexWrap="wrap" useFlexGap>
-                        {player.traits.map((traitId) => (
-                          <Chip
-                            key={traitId}
-                            label={getTraitLabel(traitId)}
-                            size="small"
-                            sx={{
-                              backgroundColor: getTraitColor(traitId),
-                              color: '#fff',
-                            }}
-                          />
-                        ))}
-                      </Stack>
-                    </Box>
-                    <Stack direction="row">
-                      <Tooltip title={t('unavailability.title')}>
-                        <IconButton
+                      {isCurrentlyUnavailable(player.id) && (
+                        <Chip
+                          label={t('unavailability.reasons.' + (unavailabilities.find(u => u.playerId === player.id && u.startDate <= new Date().toISOString().split('T')[0] && u.endDate >= new Date().toISOString().split('T')[0])?.reason || 'other'))}
                           size="small"
-                          onClick={() => setUnavailPlayer(player)}
-                          color={isCurrentlyUnavailable(player.id) ? 'error' : 'default'}
-                        >
-                          <PersonOffIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <IconButton
-                        size="small"
-                        onClick={() => {
-                          setEditingPlayer(player);
-                          setDialogOpen(true);
-                        }}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => setDeleteTarget(player)}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
+                          color="error"
+                          sx={{ height: 20, fontSize: '0.7rem' }}
+                        />
+                      )}
+                    </Box>
+                    <Stack direction="row" spacing={0.5} mt={0.5} flexWrap="wrap" useFlexGap>
+                      {player.traits.map((traitId) => (
+                        <Chip
+                          key={traitId}
+                          label={getTraitLabel(traitId)}
+                          size="small"
+                          sx={{
+                            height: 20,
+                            fontSize: '0.65rem',
+                            backgroundColor: getTraitColor(traitId),
+                            color: '#fff',
+                          }}
+                        />
+                      ))}
                     </Stack>
                   </Box>
-                </CardContent>
-              </Card>
-            </Grid2>
+                  <Stack direction="row" spacing={0} sx={{ flexShrink: 0 }}>
+                    <IconButton
+                      size="small"
+                      onClick={() => setUnavailPlayer(player)}
+                      color={isCurrentlyUnavailable(player.id) ? 'error' : 'default'}
+                      sx={{ p: 0.5 }}
+                    >
+                      <PersonOffIcon sx={{ fontSize: 18 }} />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setEditingPlayer(player);
+                        setDialogOpen(true);
+                      }}
+                      sx={{ p: 0.5 }}
+                    >
+                      <EditIcon sx={{ fontSize: 18 }} />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => setDeleteTarget(player)}
+                      sx={{ p: 0.5 }}
+                    >
+                      <DeleteIcon sx={{ fontSize: 18 }} />
+                    </IconButton>
+                  </Stack>
+                </Box>
+              </CardContent>
+            </Card>
           ))}
-        </Grid2>
+        </Stack>
       )}
 
       <PlayerDialog
@@ -210,6 +232,7 @@ export default function RosterPage() {
           }
         }}
         traits={traits}
+        onCreateTrait={addTrait}
       />
 
       <ConfirmDialog

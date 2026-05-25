@@ -13,15 +13,21 @@ import Grid2 from '@mui/material/Grid2';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Tooltip from '@mui/material/Tooltip';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import PersonOffIcon from '@mui/icons-material/PersonOff';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CircularProgress from '@mui/material/CircularProgress';
 import { usePlayers } from '../hooks/usePlayers';
 import { useTraits } from '../hooks/useTraits';
+import { useTeamName } from '../hooks/useTeam';
 import { useUnavailability } from '../hooks/useUnavailability';
 import PlayerDialog from '../components/PlayerDialog';
 import ImportDialog from '../components/ImportDialog';
@@ -34,6 +40,7 @@ export default function MyTeamPage() {
   const { t } = useTranslation();
   const { players, loading, addPlayer, updatePlayer, deletePlayer } = usePlayers();
   const { traits, loading: traitsLoading, addTrait, updateTrait, deleteTrait } = useTraits();
+  const { teamName, updateTeamName } = useTeamName();
   const { unavailabilities, addUnavailability, deleteUnavailability } = useUnavailability();
 
   const [tab, setTab] = useState(0);
@@ -48,6 +55,13 @@ export default function MyTeamPage() {
   const [traitDialogOpen, setTraitDialogOpen] = useState(false);
   const [editingTrait, setEditingTrait] = useState<Trait | null>(null);
   const [deleteTraitTarget, setDeleteTraitTarget] = useState<Trait | null>(null);
+
+  // Menu state
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+
+  // Team name editing
+  const [editingTeamName, setEditingTeamName] = useState(false);
+  const [teamNameValue, setTeamNameValue] = useState('');
 
   const isCurrentlyUnavailable = (playerId: string) => {
     const today = new Date().toISOString().split('T')[0];
@@ -130,7 +144,42 @@ export default function MyTeamPage() {
 
   return (
     <Box>
-      <Typography variant="h4" mb={2}>{t('nav.myTeam')}</Typography>
+      <Box display="flex" alignItems="center" gap={1} mb={2}>
+        {editingTeamName ? (
+          <TextField
+            size="small"
+            value={teamNameValue}
+            onChange={(e) => setTeamNameValue(e.target.value)}
+            onBlur={() => {
+              updateTeamName(teamNameValue);
+              setEditingTeamName(false);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                updateTeamName(teamNameValue);
+                setEditingTeamName(false);
+              }
+            }}
+            autoFocus
+            placeholder={t('team.namePlaceholder')}
+          />
+        ) : (
+          <>
+            <Typography variant="h4">
+              {teamName || t('nav.myTeam')}
+            </Typography>
+            <IconButton
+              size="small"
+              onClick={() => {
+                setTeamNameValue(teamName);
+                setEditingTeamName(true);
+              }}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </>
+        )}
+      </Box>
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
         <Tab label={t('roster.title')} />
@@ -153,6 +202,7 @@ export default function MyTeamPage() {
                 startIcon={<FileDownloadIcon />}
                 onClick={handleExportCSV}
                 disabled={players.length === 0}
+                sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
               >
                 {t('roster.exportPlayers')}
               </Button>
@@ -160,9 +210,35 @@ export default function MyTeamPage() {
                 variant="outlined"
                 startIcon={<FileUploadIcon />}
                 onClick={() => setImportOpen(true)}
+                sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
               >
                 {t('roster.importPlayers')}
               </Button>
+              <IconButton
+                onClick={(e) => setMenuAnchor(e.currentTarget)}
+                sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+              >
+                <MoreVertIcon />
+              </IconButton>
+              <Menu
+                anchorEl={menuAnchor}
+                open={Boolean(menuAnchor)}
+                onClose={() => setMenuAnchor(null)}
+              >
+                <MenuItem
+                  onClick={() => { handleExportCSV(); setMenuAnchor(null); }}
+                  disabled={players.length === 0}
+                >
+                  <ListItemIcon><FileDownloadIcon fontSize="small" /></ListItemIcon>
+                  <ListItemText>{t('roster.exportPlayers')}</ListItemText>
+                </MenuItem>
+                <MenuItem
+                  onClick={() => { setImportOpen(true); setMenuAnchor(null); }}
+                >
+                  <ListItemIcon><FileUploadIcon fontSize="small" /></ListItemIcon>
+                  <ListItemText>{t('roster.importPlayers')}</ListItemText>
+                </MenuItem>
+              </Menu>
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
@@ -332,6 +408,7 @@ export default function MyTeamPage() {
           }
         }}
         traits={traits}
+        onCreateTrait={addTrait}
       />
 
       <ConfirmDialog

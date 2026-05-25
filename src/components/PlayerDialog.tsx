@@ -24,7 +24,7 @@ interface PlayerDialogProps {
   traits: Trait[];
   onClose: () => void;
   onSave: (data: Omit<Player, 'id' | 'createdAt' | 'version'>) => void;
-  onCreateTrait?: (data: Omit<Trait, 'id'>) => Promise<void>;
+  onCreateTrait?: (data: Omit<Trait, 'id'>) => Promise<unknown>;
 }
 
 const DEFAULT_COLORS = ['#2196f3', '#4caf50', '#ff9800', '#e91e63', '#9c27b0', '#00bcd4', '#ff5722', '#607d8b'];

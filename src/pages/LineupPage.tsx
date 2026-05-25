@@ -1,16 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
+import Checkbox from '@mui/material/Checkbox';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import {
-  DndContext,
-  DragEndEvent,
-  DragStartEvent,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  useDroppable,
-} from '@dnd-kit/core';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
@@ -23,40 +14,39 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import TextField from '@mui/material/TextField';
 import ShareIcon from '@mui/icons-material/Share';
+import EditIcon from '@mui/icons-material/Edit';
+import WeekendIcon from '@mui/icons-material/Weekend';
 import CircularProgress from '@mui/material/CircularProgress';
 import { usePlayers } from '../hooks/usePlayers';
 import { useTraits } from '../hooks/useTraits';
 import { useMatches } from '../hooks/useMatches';
 import { useLineup, useAllLineups } from '../hooks/useLineup';
+import { useTeamId } from '../hooks/useTeam';
 import { useUnavailability, getUnavailablePlayerIds } from '../hooks/useUnavailability';
 import { getConflictingPlayerIds } from '../utils/conflicts';
 import Pitch from '../components/Pitch';
-import DraggablePlayer from '../components/DraggablePlayer';
 import PlayerCard from '../components/PlayerCard';
 import type { LineupPlayer } from '../types';
 
 export default function LineupPage() {
-  const { matchId } = useParams<{ matchId: string }>();
+  const { matchId, lineupId } = useParams<{ matchId?: string; lineupId?: string }>();
   const { t } = useTranslation();
+  const teamId = useTeamId();
   const { players } = usePlayers();
   const { traits } = useTraits();
   const { matches } = useMatches();
-  const { lineup, loading, createLineup, setPlayers, setBench, toggleShared } = useLineup(matchId || null);
+  const { lineup, loading, createLineup, setPlayers, setBench, toggleShared, renameLineup } = useLineup(matchId || null, lineupId || null);
   const { lineups } = useAllLineups();
   const { unavailabilities } = useUnavailability();
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [traitFilter, setTraitFilter] = useState<string>('');
   const [snackbar, setSnackbar] = useState('');
+  const [editingName, setEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState('');
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-  );
-
-  const { setNodeRef: setBenchRef, isOver: isBenchOver } = useDroppable({ id: 'bench' });
-
-  const currentMatch = matches.find((m) => m.id === matchId);
+  const currentMatch = matches.find((m) => m.id === (matchId || lineup?.matchId));
 
   const conflictingIds = useMemo(() => {
     if (!currentMatch) return new Set<string>();
@@ -88,49 +78,25 @@ export default function LineupPage() {
     });
   }, [players, assignedPlayerIds, traitFilter]);
 
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  };
+  const handleToggleFieldSelect = useCallback(
+    (playerId: string) => {
+      setSelectedPlayerIds((prev) =>
+        prev.includes(playerId)
+          ? prev.filter((id) => id !== playerId)
+          : [...prev, playerId]
+      );
+    },
+    []
+  );
 
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      setActiveId(null);
-      if (!lineup || !event.over) return;
-
-      const playerId = event.active.id as string;
-      const target = event.over.id as string;
-
-      if (target === 'pitch') {
-        // Dropped on pitch - calculate position from the drop coordinates
-        const pitchRect = document.getElementById('pitch-drop-zone')?.getBoundingClientRect();
-        if (!pitchRect) return;
-
-        // Use the delta from dnd-kit to calculate position
-        // const delta = event.delta;
-        const activeRect = event.active.rect.current.translated;
-        if (!activeRect) return;
-
-        const x = ((activeRect.left + activeRect.width / 2 - pitchRect.left) / pitchRect.width) * 100;
-        const y = ((activeRect.top + activeRect.height / 2 - pitchRect.top) / pitchRect.height) * 100;
-
-        const clampedX = Math.max(5, Math.min(95, x));
-        const clampedY = Math.max(5, Math.min(95, y));
-
-        // Remove from bench if was there
-        const newBench = lineup.bench.filter((id) => id !== playerId);
-        // Remove from existing pitch position
-        const newPlayers = lineup.players.filter((p) => p.playerId !== playerId);
-        newPlayers.push({ playerId, x: clampedX, y: clampedY });
-
-        setPlayers(newPlayers);
-        if (newBench.length !== lineup.bench.length) setBench(newBench);
-      } else if (target === 'bench') {
-        // Move to bench
-        const newPlayers = lineup.players.filter((p) => p.playerId !== playerId);
-        const newBench = [...lineup.bench.filter((id) => id !== playerId), playerId];
-        setPlayers(newPlayers);
-        setBench(newBench);
-      }
+  const handleSendToBench = useCallback(
+    (playerId: string) => {
+      if (!lineup) return;
+      const newBench = [...lineup.bench.filter((id) => id !== playerId), playerId];
+      // Remove from pitch if on pitch
+      const newPlayers = lineup.players.filter((p) => p.playerId !== playerId);
+      if (newPlayers.length !== lineup.players.length) setPlayers(newPlayers);
+      setBench(newBench);
     },
     [lineup, setPlayers, setBench]
   );
@@ -161,21 +127,22 @@ export default function LineupPage() {
 
   const handleTapToPlace = useCallback(
     (x: number, y: number) => {
-      if (!lineup || !selectedPlayerId) return;
-      const newPlayers: LineupPlayer[] = lineup.players.filter((p) => p.playerId !== selectedPlayerId);
-      newPlayers.push({ playerId: selectedPlayerId, x, y });
-      const newBench = lineup.bench.filter((id) => id !== selectedPlayerId);
+      if (!lineup || selectedPlayerIds.length === 0) return;
+      const nextPlayerId = selectedPlayerIds[0];
+      const newPlayers: LineupPlayer[] = lineup.players.filter((p) => p.playerId !== nextPlayerId);
+      newPlayers.push({ playerId: nextPlayerId, x, y });
+      const newBench = lineup.bench.filter((id) => id !== nextPlayerId);
       setPlayers(newPlayers);
       if (newBench.length !== lineup.bench.length) setBench(newBench);
-      setSelectedPlayerId(null);
+      setSelectedPlayerIds((prev) => prev.slice(1));
     },
-    [lineup, selectedPlayerId, setPlayers, setBench]
+    [lineup, selectedPlayerIds, setPlayers, setBench]
   );
 
   const handleShare = async () => {
     if (!lineup) return;
     await toggleShared();
-    const url = `${window.location.origin}/lineup/${matchId}`;
+    const url = `${window.location.origin}/lineup/id/${lineup.id}?team=${teamId}`;
     await navigator.clipboard.writeText(url);
     setSnackbar(t('lineup.linkCopied'));
   };
@@ -188,12 +155,12 @@ export default function LineupPage() {
     );
   }
 
-  if (!matchId) {
+  if (!matchId && !lineupId) {
     return <Typography>No match selected</Typography>;
   }
 
-  // Auto-create lineup if none exists
-  if (!lineup) {
+  // Auto-create lineup if none exists (only when accessed via matchId)
+  if (!lineup && matchId) {
     createLineup(matchId);
     return (
       <Box display="flex" justifyContent="center" mt={4}>
@@ -202,126 +169,208 @@ export default function LineupPage() {
     );
   }
 
-  const activePlayer = players.find((p) => p.id === activeId);
+  if (!lineup) {
+    return <Typography>Lineup not found</Typography>;
+  }
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <Box>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h5">
-            {t('lineup.title')} {currentMatch && `— vs ${currentMatch.opponent}`}
-          </Typography>
-          <Tooltip title={t('lineup.share')}>
-            <IconButton onClick={handleShare}>
-              <ShareIcon />
-            </IconButton>
-          </Tooltip>
-        </Box>
-
-        <Box display="flex" gap={2} flexDirection={{ xs: 'column', md: 'row' }}>
-          {/* Sidebar - Available Players */}
-          <Paper
-            sx={{
-              width: { xs: '100%', md: 280 },
-              p: 2,
-              maxHeight: { md: 'calc(100vh - 150px)' },
-              overflow: 'auto',
-              flexShrink: 0,
-            }}
-          >
-            <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-              {t('lineup.availablePlayers')}
-            </Typography>
-
-            <FormControl size="small" fullWidth sx={{ mb: 2 }}>
-              <InputLabel>{t('lineup.filterByTrait')}</InputLabel>
-              <Select
-                value={traitFilter}
-                onChange={(e) => setTraitFilter(e.target.value)}
-                label={t('lineup.filterByTrait')}
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Box display="flex" alignItems="center" gap={1}>
+          {editingName ? (
+            <TextField
+              size="small"
+              value={nameValue}
+              onChange={(e) => setNameValue(e.target.value)}
+              onBlur={() => {
+                renameLineup(nameValue);
+                setEditingName(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  renameLineup(nameValue);
+                  setEditingName(false);
+                }
+              }}
+              autoFocus
+              placeholder={t('lineup.namePlaceholder')}
+            />
+          ) : (
+            <>
+              <Typography variant="h5">
+                {lineup.name || t('lineup.title')} {currentMatch && `— vs ${currentMatch.opponent}`}
+              </Typography>
+              <IconButton
+                size="small"
+                onClick={() => {
+                  setNameValue(lineup.name || '');
+                  setEditingName(true);
+                }}
               >
-                <MenuItem value="">All</MenuItem>
-                {traits.map((trait) => (
-                  <MenuItem key={trait.id} value={trait.id}>
-                    {trait.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </>
+          )}
+        </Box>
+        <Tooltip title={t('lineup.share')}>
+          <IconButton onClick={handleShare}>
+            <ShareIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+
+      <Box display="flex" gap={2} flexDirection={{ xs: 'column', md: 'row' }}>
+        {/* Sidebar - Available Players */}
+        <Paper
+          sx={{
+            width: { xs: '100%', md: 280 },
+            p: 2,
+            maxHeight: { md: 'calc(100vh - 150px)' },
+            overflow: 'auto',
+            flexShrink: 0,
+          }}
+        >
+          <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+            {t('lineup.availablePlayers')}
+          </Typography>
+
+          <FormControl size="small" fullWidth sx={{ mb: 2 }}>
+            <InputLabel>{t('lineup.filterByTrait')}</InputLabel>
+            <Select
+              value={traitFilter}
+              onChange={(e) => setTraitFilter(e.target.value)}
+              label={t('lineup.filterByTrait')}
+            >
+              <MenuItem value="">All</MenuItem>
+              {traits.map((trait) => (
+                <MenuItem key={trait.id} value={trait.id}>
+                  {trait.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
             {availablePlayers.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
                 {t('lineup.noPlayers')}
               </Typography>
             ) : (
-              <Box display="flex" flexDirection="column" gap={1}>
+              <Box display="flex" flexDirection="column" gap={0.5}>
                 {availablePlayers.map((player) => {
                   const isConflicting = conflictingIds.has(player.id);
                   const isUnavailable = unavailableIds.has(player.id);
                   const disabled = isConflicting || isUnavailable;
+                  const isSelected = selectedPlayerIds.includes(player.id);
                   let message: string | undefined;
                   if (isUnavailable) message = t('lineup.unavailable');
                   else if (isConflicting) message = t('lineup.conflict');
                   return (
-                    <DraggablePlayer
-                      key={player.id}
-                      player={player}
-                      traits={traits}
-                      disabled={disabled}
-                      conflictMessage={message}
-                      selected={selectedPlayerId === player.id}
-                      onSelect={() => setSelectedPlayerId((prev) => prev === player.id ? null : player.id)}
-                    />
-                  );
-                })}
-              </Box>
-            )}
-          </Paper>
+                  <Box
+                    key={player.id}
+                    sx={{
+                      opacity: disabled ? 0.4 : 1,
+                      filter: isUnavailable ? 'grayscale(100%)' : 'none',
+                      position: 'relative',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                    }}
+                  >
+                    {!disabled && (
+                      <Checkbox
+                        size="small"
+                        checked={isSelected}
+                        onChange={() => handleToggleFieldSelect(player.id)}
+                        sx={{ p: 0.25 }}
+                      />
+                    )}
+                    <Box flex={1} minWidth={0}>
+                      {disabled && message && (
+                        <Typography
+                          variant="caption"
+                          color="error"
+                          sx={{ position: 'absolute', top: -2, right: 4, zIndex: 1 }}
+                        >
+                          {message}
+                        </Typography>
+                      )}
+                      <PlayerCard player={player} traits={traits} />
+                    </Box>
+                    {!disabled && (
+                      <IconButton
+                        size="small"
+                        onClick={() => handleSendToBench(player.id)}
+                        sx={{ p: 0.5, flexShrink: 0 }}
+                      >
+                        <WeekendIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </Box>
+                );
+              })}
+            </Box>
+          )}
+        </Paper>
 
-          {/* Pitch */}
-          <Box flexGrow={1}>
-            <Pitch
-              players={lineup.players}
-              allPlayers={players}
-              traits={traits}
-              onDrop={handlePitchDrop}
-              onRemove={handleRemoveFromPitch}
-              selectedPlayerId={selectedPlayerId}
-              selectedPlayerName={players.find((p) => p.id === selectedPlayerId)?.name}
-              onTapToPlace={handleTapToPlace}
-            />
-
-            {/* Bench */}
-            <Paper ref={setBenchRef} sx={{ mt: 2, p: 2, bgcolor: isBenchOver ? 'action.hover' : undefined }}>
-              <Typography variant="subtitle2" gutterBottom>
-                {t('lineup.bench')}
+        {/* Pitch */}
+        <Box flexGrow={1}>
+          {selectedPlayerIds.length > 0 && (
+            <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <Typography variant="caption" color="text.secondary">
+                {t('lineup.tapToPlace')}:
               </Typography>
-              <Box display="flex" gap={1} flexWrap="wrap">
-                {lineup.bench.map((playerId) => {
-                  const player = players.find((p) => p.id === playerId);
-                  if (!player) return null;
-                  return (
-                    <Chip
-                      key={playerId}
-                      label={`${player.name}`}
-                      onDelete={() => handleRemoveFromPitch(playerId)}
-                    />
-                  );
-                })}
-                {lineup.bench.length === 0 && (
-                  <Typography variant="body2" color="text.secondary">
-                    {t('lineup.dragHint')}
-                  </Typography>
-                )}
-              </Box>
-            </Paper>
-          </Box>
+              {selectedPlayerIds.map((id) => {
+                const p = players.find((pl) => pl.id === id);
+                return p ? (
+                  <Chip
+                    key={id}
+                    label={p.name}
+                    size="small"
+                    onDelete={() => setSelectedPlayerIds((prev) => prev.filter((pid) => pid !== id))}
+                  />
+                ) : null;
+              })}
+            </Box>
+          )}
+          <Pitch
+            players={lineup.players}
+            allPlayers={players}
+            traits={traits}
+            onDrop={handlePitchDrop}
+            onRemove={handleRemoveFromPitch}
+            selectedPlayerId={selectedPlayerIds[0] || null}
+            selectedPlayerName={selectedPlayerIds.length > 0 ? `${players.find((p) => p.id === selectedPlayerIds[0])?.name || ''} (+${selectedPlayerIds.length - 1})` : undefined}
+            onTapToPlace={handleTapToPlace}
+          />
+
+          {/* Bench */}
+          <Paper sx={{ mt: 2, p: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              {t('lineup.bench')}
+            </Typography>
+            <Box display="flex" gap={1} flexWrap="wrap">
+              {lineup.bench.map((playerId) => {
+                const player = players.find((p) => p.id === playerId);
+                if (!player) return null;
+                return (
+                  <Chip
+                    key={playerId}
+                    label={`${player.name}`}
+                    onDelete={() => handleRemoveFromPitch(playerId)}
+                    onClick={() => handleToggleFieldSelect(playerId)}
+                    clickable
+                  />
+                );
+              })}
+              {lineup.bench.length === 0 && (
+                <Typography variant="body2" color="text.secondary">
+                  {t('lineup.benchEmpty')}
+                </Typography>
+              )}
+            </Box>
+          </Paper>
         </Box>
       </Box>
-
-      <DragOverlay>
-        {activePlayer && <PlayerCard player={activePlayer} traits={traits} />}
-      </DragOverlay>
 
       <Snackbar
         open={!!snackbar}
@@ -332,6 +381,6 @@ export default function LineupPage() {
           {snackbar}
         </Alert>
       </Snackbar>
-    </DndContext>
+    </Box>
   );
 }

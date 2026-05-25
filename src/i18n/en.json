@@ -64,7 +64,14 @@
     "filterByTrait": "Filter by trait",
     "noPlayers": "No players available",
     "dragHint": "Drag players onto the pitch",
-    "unavailable": "Player is unavailable (injured/other)"
+    "unavailable": "Player is unavailable (injured/other)",
+    "toField": "Field",
+    "toBench": "Bench",
+    "tapToPlace": "Tap pitch to place",
+    "benchEmpty": "No players on bench. Use the Bench button to add.",
+    "name": "Lineup Name",
+    "namePlaceholder": "e.g. Main lineup",
+    "rename": "Rename"
   },
   "import": {
     "title": "Import Players",
@@ -81,6 +88,9 @@
     "team": "Share Team",
     "linkCopied": "Team link copied to clipboard! Share it with others to collaborate.",
     "activeUsers": "{{count}} user(s) online"
+  },
+  "team": {
+    "namePlaceholder": "e.g. My Team Name"
   },
   "common": {
     "save": "Save",

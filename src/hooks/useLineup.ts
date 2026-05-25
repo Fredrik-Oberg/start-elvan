@@ -9,12 +9,13 @@ import {
   setDoc,
   deleteDoc,
   runTransaction,
+  getDoc,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useTeamId } from './useTeam';
 import type { Lineup, LineupPlayer } from '../types';
 
-export function useLineup(matchId: string | null) {
+export function useLineup(matchId: string | null, lineupId?: string | null) {
   const teamId = useTeamId();
   const [lineup, setLineup] = useState<Lineup | null>(null);
   const [positions, setPositions] = useState<LineupPlayer[]>([]);
@@ -22,7 +23,26 @@ export function useLineup(matchId: string | null) {
 
   // Listen to the lineup document (metadata: bench, shared, etc.)
   useEffect(() => {
-    if (!teamId || !matchId) {
+    if (!teamId) {
+      setLoading(false);
+      return;
+    }
+
+    // Load by lineupId if provided, otherwise by matchId
+    if (lineupId) {
+      const docRef = doc(db, 'teams', teamId, 'lineups', lineupId);
+      const unsub = onSnapshot(docRef, (snap) => {
+        if (snap.exists()) {
+          setLineup({ id: snap.id, ...snap.data(), players: [] } as unknown as Lineup);
+        } else {
+          setLineup(null);
+        }
+        setLoading(false);
+      });
+      return unsub;
+    }
+
+    if (!matchId) {
       setLoading(false);
       return;
     }
@@ -38,7 +58,7 @@ export function useLineup(matchId: string | null) {
       setLoading(false);
     });
     return unsub;
-  }, [teamId, matchId]);
+  }, [teamId, matchId, lineupId]);
 
   // Listen to per-player position sub-documents
   useEffect(() => {
@@ -163,11 +183,36 @@ export function useLineup(matchId: string | null) {
     [lineup, teamId, setPlayers]
   );
 
+  const renameLineup = useCallback(
+    async (name: string) => {
+      if (!lineup) return;
+      const ref = doc(db, 'teams', teamId, 'lineups', lineup.id);
+      await setDoc(ref, { name, updatedAt: Date.now() }, { merge: true });
+    },
+    [lineup, teamId]
+  );
+
+  const deleteLineup = useCallback(async () => {
+    if (!lineup) return;
+    // Delete positions sub-collection docs
+    // const posCol = collection(db, 'teams', teamId, 'lineups', lineup.id, 'positions');
+    const posSnap = await getDoc(doc(db, 'teams', teamId, 'lineups', lineup.id));
+    if (posSnap.exists()) {
+      // Delete positions
+      for (const pos of positions) {
+        await deleteDoc(doc(db, 'teams', teamId, 'lineups', lineup.id, 'positions', pos.playerId));
+      }
+    }
+    await deleteDoc(doc(db, 'teams', teamId, 'lineups', lineup.id));
+  }, [lineup, teamId, positions]);
+
   return {
     lineup: lineupWithPlayers,
     loading,
     createLineup,
     updateLineup,
+    renameLineup,
+    deleteLineup,
     setPlayers,
     setPlayerPosition,
     removePlayerFromPitch,

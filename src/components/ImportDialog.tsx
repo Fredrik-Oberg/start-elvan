@@ -13,6 +13,7 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Box from '@mui/material/Box';
+import { parseCSVWithUnresolved, parseJSONWithUnresolved } from '../utils/importParser';
 import type { Player, Trait } from '../types';
 
 interface ImportDialogProps {
@@ -20,14 +21,16 @@ interface ImportDialogProps {
   onClose: () => void;
   onImport: (players: Omit<Player, 'id' | 'createdAt' | 'version'>[]) => Promise<void>;
   traits: Trait[];
+  onCreateTrait?: (trait: Omit<Trait, 'id'>) => Promise<string>;
 }
 
 interface ParsedPlayer {
   name: string;
   traits: string[];
+  unresolvedTraits?: string[];
 }
 
-export default function ImportDialog({ open, onClose, onImport, traits }: ImportDialogProps) {
+export default function ImportDialog({ open, onClose, onImport, traits, onCreateTrait }: ImportDialogProps) {
   const { t } = useTranslation();
   const [parsed, setParsed] = useState<ParsedPlayer[]>([]);
   const [error, setError] = useState('');
@@ -43,9 +46,9 @@ export default function ImportDialog({ open, onClose, onImport, traits }: Import
       try {
         const content = ev.target?.result as string;
         if (file.name.endsWith('.json')) {
-          parseJSON(content);
+          setParsed(parseJSONWithUnresolved(content, traits));
         } else if (file.name.endsWith('.csv')) {
-          parseCSV(content);
+          setParsed(parseCSVWithUnresolved(content, traits));
         } else {
           setError('Unsupported file format');
         }
@@ -56,45 +59,39 @@ export default function ImportDialog({ open, onClose, onImport, traits }: Import
     reader.readAsText(file);
   };
 
-  const parseJSON = (content: string) => {
-    const data = JSON.parse(content);
-    if (!Array.isArray(data)) throw new Error('JSON must be an array');
-    const players: ParsedPlayer[] = data.map((item) => ({
-      name: String(item.name || ''),
-      traits: resolveTraits(item.traits || []),
-    }));
-    setParsed(players);
-  };
-
-  const parseCSV = (content: string) => {
-    const lines = content.trim().split('\n');
-    const players: ParsedPlayer[] = lines
-      .filter((line) => line.trim())
-      .map((line) => {
-        const parts = line.split(',').map((s) => s.trim());
-        return {
-          name: parts[0] || '',
-          traits: resolveTraits(parts.slice(1)),
-        };
-      });
-    setParsed(players);
-  };
-
-  const resolveTraits = (traitLabels: string[]): string[] => {
-    return traitLabels
-      .map((label) => {
-        const found = traits.find(
-          (t) => t.label.toLowerCase() === label.toLowerCase()
-        );
-        return found?.id || '';
-      })
-      .filter(Boolean);
-  };
-
   const handleImport = async () => {
     setImporting(true);
     try {
-      await onImport(parsed);
+      // Auto-create missing traits and collect new IDs
+      const traitLabelToId = new Map<string, string>();
+      if (onCreateTrait) {
+        const allUnresolved = new Set<string>();
+        for (const p of parsed) {
+          if (p.unresolvedTraits) {
+            for (const label of p.unresolvedTraits) {
+              allUnresolved.add(label);
+            }
+          }
+        }
+        for (const label of allUnresolved) {
+          const color = '#' + Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0');
+          const newId = await onCreateTrait({ label, color });
+          traitLabelToId.set(label.toLowerCase(), newId);
+        }
+      }
+
+      // Remap players with newly created trait IDs
+      const finalPlayers = parsed.map((p) => {
+        const extraTraitIds = (p.unresolvedTraits || [])
+          .map((label) => traitLabelToId.get(label.toLowerCase()))
+          .filter(Boolean) as string[];
+        return {
+          name: p.name,
+          traits: [...p.traits, ...extraTraitIds],
+        };
+      });
+
+      await onImport(finalPlayers);
       setParsed([]);
       onClose();
     } catch (err) {

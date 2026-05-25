@@ -1,4 +1,6 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 interface TeamContextType {
   teamId: string;
@@ -9,6 +11,35 @@ export const TeamContext = createContext<TeamContextType>({ teamId: '' });
 export function useTeamId(): string {
   const { teamId } = useContext(TeamContext);
   return teamId;
+}
+
+export function useTeamName() {
+  const teamId = useTeamId();
+  const [teamName, setTeamName] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!teamId) {
+      setLoading(false);
+      return;
+    }
+    const ref = doc(db, 'teams', teamId);
+    const unsub = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        setTeamName(snap.data().name || '');
+      }
+      setLoading(false);
+    });
+    return unsub;
+  }, [teamId]);
+
+  const updateTeamName = useCallback(async (name: string) => {
+    if (!teamId) return;
+    const ref = doc(db, 'teams', teamId);
+    await setDoc(ref, { name }, { merge: true });
+  }, [teamId]);
+
+  return { teamName, loading, updateTeamName };
 }
 
 export function getOrCreateTeamId(): string {

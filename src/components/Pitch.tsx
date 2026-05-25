@@ -216,8 +216,19 @@ export default function Pitch({ players, allPlayers, traits, onDrop, onRemove, s
       {players.map((lp) => {
         const player = allPlayers.find((p) => p.id === lp.playerId);
         if (!player) return null;
-        const primaryTrait = player.traits[0];
-        const traitColor = traits.find((t) => t.id === primaryTrait)?.color || '#1565c0';
+        const playerTraitColors = player.traits
+          .map((tid) => traits.find((t) => t.id === tid)?.color)
+          .filter(Boolean) as string[];
+        const colors = playerTraitColors.length > 0 ? playerTraitColors : ['#1565c0'];
+
+        let background: string;
+        if (colors.length === 1) {
+          background = colors[0];
+        } else {
+          const step = 100 / colors.length;
+          const stops = colors.map((c, i) => `${c} ${i * step}% ${(i + 1) * step}%`).join(', ');
+          background = `conic-gradient(${stops})`;
+        }
 
         return (
           <Box
@@ -241,7 +252,7 @@ export default function Pitch({ players, allPlayers, traits, onDrop, onRemove, s
                 width: 40,
                 height: 40,
                 borderRadius: '50%',
-                backgroundColor: traitColor,
+                background,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

@@ -24,6 +24,7 @@ export default function App() {
               <Route path="/matches" element={<MatchesPage />} />
               <Route path="/lineups" element={<LineupsListPage />} />
               <Route path="/lineup/:matchId" element={<LineupPage />} />
+              <Route path="/lineup/id/:lineupId" element={<LineupPage />} />
             </Routes>
           </Layout>
         </BrowserRouter>
