@@ -74,9 +74,12 @@ export default function LineupPage() {
     return players.filter((p) => {
       if (assignedPlayerIds.has(p.id)) return false;
       if (traitFilter && !p.traits.includes(traitFilter)) return false;
+      // Exclude unavailable and conflicting players from the selectable list
+      if (unavailableIds.has(p.id)) return false;
+      if (conflictingIds.has(p.id)) return false;
       return true;
     });
-  }, [players, assignedPlayerIds, traitFilter]);
+  }, [players, assignedPlayerIds, traitFilter, unavailableIds, conflictingIds]);
 
   const handleToggleFieldSelect = useCallback(
     (playerId: string) => {
@@ -220,7 +223,7 @@ export default function LineupPage() {
       </Box>
 
       <Box display="flex" gap={2} flexDirection={{ xs: 'column', md: 'row' }}>
-        {/* Sidebar - Available Players */}
+        {/* Sidebar - Available Players (shows after pitch on mobile) */}
         <Paper
           sx={{
             width: { xs: '100%', md: 280 },
@@ -228,6 +231,7 @@ export default function LineupPage() {
             maxHeight: { md: 'calc(100vh - 150px)' },
             overflow: 'auto',
             flexShrink: 0,
+            order: { xs: 2, md: 0 },
           }}
         >
           <Typography variant="subtitle1" gutterBottom fontWeight="bold">
@@ -257,63 +261,82 @@ export default function LineupPage() {
             ) : (
               <Box display="flex" flexDirection="column" gap={0.5}>
                 {availablePlayers.map((player) => {
-                  const isConflicting = conflictingIds.has(player.id);
-                  const isUnavailable = unavailableIds.has(player.id);
-                  const disabled = isConflicting || isUnavailable;
                   const isSelected = selectedPlayerIds.includes(player.id);
-                  let message: string | undefined;
-                  if (isUnavailable) message = t('lineup.unavailable');
-                  else if (isConflicting) message = t('lineup.conflict');
                   return (
                   <Box
                     key={player.id}
                     sx={{
-                      opacity: disabled ? 0.4 : 1,
-                      filter: isUnavailable ? 'grayscale(100%)' : 'none',
                       position: 'relative',
                       display: 'flex',
                       alignItems: 'center',
                       gap: 0.5,
                     }}
                   >
-                    {!disabled && (
-                      <Checkbox
-                        size="small"
-                        checked={isSelected}
-                        onChange={() => handleToggleFieldSelect(player.id)}
-                        sx={{ p: 0.25 }}
-                      />
-                    )}
+                    <Checkbox
+                      size="small"
+                      checked={isSelected}
+                      onChange={() => handleToggleFieldSelect(player.id)}
+                      sx={{ p: 0.25 }}
+                    />
                     <Box flex={1} minWidth={0}>
-                      {disabled && message && (
-                        <Typography
-                          variant="caption"
-                          color="error"
-                          sx={{ position: 'absolute', top: -2, right: 4, zIndex: 1 }}
-                        >
-                          {message}
-                        </Typography>
-                      )}
                       <PlayerCard player={player} traits={traits} />
                     </Box>
-                    {!disabled && (
-                      <IconButton
-                        size="small"
-                        onClick={() => handleSendToBench(player.id)}
-                        sx={{ p: 0.5, flexShrink: 0 }}
-                      >
-                        <WeekendIcon fontSize="small" />
-                      </IconButton>
-                    )}
+                    <IconButton
+                      size="small"
+                      onClick={() => handleSendToBench(player.id)}
+                      sx={{ p: 0.5, flexShrink: 0 }}
+                    >
+                      <WeekendIcon fontSize="small" />
+                    </IconButton>
                   </Box>
                 );
               })}
             </Box>
           )}
+
+          {/* Show unavailable/conflicting players greyed out */}
+          {players.filter((p) => !assignedPlayerIds.has(p.id) && (unavailableIds.has(p.id) || conflictingIds.has(p.id))).length > 0 && (
+            <Box mt={2}>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {t('lineup.unavailablePlayers')}
+              </Typography>
+              <Box display="flex" flexDirection="column" gap={0.5}>
+                {players
+                  .filter((p) => !assignedPlayerIds.has(p.id) && (unavailableIds.has(p.id) || conflictingIds.has(p.id)))
+                  .map((player) => {
+                    const isUnavailable = unavailableIds.has(player.id);
+                    return (
+                      <Box
+                        key={player.id}
+                        sx={{
+                          opacity: 0.4,
+                          filter: 'grayscale(100%)',
+                          position: 'relative',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.5,
+                        }}
+                      >
+                        <Box flex={1} minWidth={0}>
+                          <Typography
+                            variant="caption"
+                            color="error"
+                            sx={{ position: 'absolute', top: -2, right: 4, zIndex: 1 }}
+                          >
+                            {isUnavailable ? t('lineup.unavailable') : t('lineup.conflict')}
+                          </Typography>
+                          <PlayerCard player={player} traits={traits} />
+                        </Box>
+                      </Box>
+                    );
+                  })}
+              </Box>
+            </Box>
+          )}
         </Paper>
 
         {/* Pitch */}
-        <Box flexGrow={1}>
+        <Box flexGrow={1} sx={{ order: { xs: 1, md: 0 } }}>
           {selectedPlayerIds.length > 0 && (
             <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
               <Typography variant="caption" color="text.secondary">

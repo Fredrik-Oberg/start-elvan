@@ -4,13 +4,22 @@ import {
   onSnapshot,
   addDoc,
   deleteDoc,
+  updateDoc,
   doc,
   query,
   orderBy,
+  type FieldValue,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useTeamId } from './useTeam';
 import type { Unavailability } from '../types';
+
+/** Strip undefined values so Firestore doesn't reject them. */
+function cleanForFirestore<T extends object>(obj: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined)
+  ) as Partial<T>;
+}
 
 export function useUnavailability() {
   const teamId = useTeamId();
@@ -31,7 +40,19 @@ export function useUnavailability() {
 
   const addUnavailability = async (entry: Omit<Unavailability, 'id' | 'createdAt'>) => {
     const col = collection(db, 'teams', teamId, 'unavailabilities');
-    await addDoc(col, { ...entry, createdAt: Date.now() });
+    await addDoc(col, { ...cleanForFirestore(entry), createdAt: Date.now() });
+  };
+
+  const updateUnavailability = async (id: string, entry: Omit<Unavailability, 'id' | 'createdAt'>) => {
+    const ref = doc(db, 'teams', teamId, 'unavailabilities', id);
+    // Use set with merge:false to overwrite, but first delete optional fields that may have been cleared
+    const cleaned = cleanForFirestore(entry);
+    // Explicitly null out optional fields that were removed (Firestore won't remove fields on update)
+    const payload: Record<string, unknown> = { ...cleaned };
+    if (!entry.startTime) payload.startTime = null;
+    if (!entry.endTime) payload.endTime = null;
+    if (!entry.note) payload.note = null;
+    await updateDoc(ref, payload as Record<string, FieldValue | Partial<unknown>>);
   };
 
   const deleteUnavailability = async (id: string) => {
@@ -39,7 +60,7 @@ export function useUnavailability() {
     await deleteDoc(ref);
   };
 
-  return { unavailabilities, loading, addUnavailability, deleteUnavailability };
+  return { unavailabilities, loading, addUnavailability, updateUnavailability, deleteUnavailability };
 }
 
 /**

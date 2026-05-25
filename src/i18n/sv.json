@@ -46,7 +46,9 @@
     "location": "Plats",
     "noMatches": "Inga matcher schemalagda. Lägg till din första match!",
     "createLineup": "Skapa uppställning",
-    "endTimeError": "Sluttid måste vara efter starttid"
+    "endTimeError": "Sluttid måste vara efter starttid",
+    "noUpcoming": "Inga kommande matcher",
+    "pastMatches": "Tidigare matcher"
   },
   "lineup": {
     "title": "Uppställningsbyggare",
@@ -62,6 +64,7 @@
     "usersViewing": "{{count}} användare tittar",
     "filterByTrait": "Filtrera efter egenskap",
     "noPlayers": "Inga spelare tillgängliga",
+    "unavailablePlayers": "Otillgängliga / Konflikter",
     "dragHint": "Dra spelare till planen",
     "unavailable": "Spelaren är otillgänglig (skadad/annat)",
     "toField": "Plan",
@@ -120,6 +123,7 @@
     "wholeDay": "Hela dagen",
     "note": "Anteckning",
     "add": "Lägg till otillgänglighet",
+    "editEntry": "Redigera otillgänglighet",
     "noEntries": "Inga otillgängligheter registrerade",
     "endDateError": "Slutdatum måste vara samma som eller efter startdatum"
   }

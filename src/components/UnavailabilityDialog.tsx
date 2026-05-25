@@ -18,9 +18,13 @@ import ListItemText from '@mui/material/ListItemText';
 import IconButton from '@mui/material/IconButton';
 import Chip from '@mui/material/Chip';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import type { Player, Unavailability, UnavailabilityReason } from '../types';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+import { parse, format, isValid } from 'date-fns';
 
 interface UnavailabilityDialogProps {
   open: boolean;
@@ -28,6 +32,7 @@ interface UnavailabilityDialogProps {
   unavailabilities: Unavailability[];
   onClose: () => void;
   onAdd: (entry: Omit<Unavailability, 'id' | 'createdAt'>) => void;
+  onEdit: (id: string, entry: Omit<Unavailability, 'id' | 'createdAt'>) => void;
   onDelete: (id: string) => void;
 }
 
@@ -38,16 +43,30 @@ const REASON_COLORS: Record<UnavailabilityReason, string> = {
   other: '#757575',
 };
 
+const parseDateStr = (s: string): Date | null => {
+  if (!s) return null;
+  const d = parse(s, 'yyyy-MM-dd', new Date());
+  return isValid(d) ? d : null;
+};
+
+const parseTimeStr = (s: string): Date | null => {
+  if (!s) return null;
+  const d = parse(s, 'HH:mm', new Date());
+  return isValid(d) ? d : null;
+};
+
 export default function UnavailabilityDialog({
   open,
   player,
   unavailabilities,
   onClose,
   onAdd,
+  onEdit,
   onDelete,
 }: UnavailabilityDialogProps) {
   const { t } = useTranslation();
-  const [reason, setReason] = useState<UnavailabilityReason>('injured');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [reason, setReason] = useState<UnavailabilityReason>('other');
   const [note, setNote] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -57,19 +76,22 @@ export default function UnavailabilityDialog({
   const [dateError, setDateError] = useState('');
   const [timeError, setTimeError] = useState('');
 
+  const resetForm = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setEditingId(null);
+    setReason('other');
+    setNote('');
+    setStartDate(today);
+    setEndDate(today);
+    setWholeDay(true);
+    setStartTime('');
+    setEndTime('');
+    setDateError('');
+    setTimeError('');
+  };
+
   useEffect(() => {
-    if (open) {
-      const today = new Date().toISOString().split('T')[0];
-      setReason('injured');
-      setNote('');
-      setStartDate(today);
-      setEndDate(today);
-      setWholeDay(true);
-      setStartTime('');
-      setEndTime('');
-      setDateError('');
-      setTimeError('');
-    }
+    if (open) resetForm();
   }, [open]);
 
   const validateDates = (start: string, end: string) => {
@@ -112,10 +134,24 @@ export default function UnavailabilityDialog({
     (u) => u.playerId === player?.id
   );
 
-  const handleAdd = () => {
+  const handleEditStart = (u: Unavailability) => {
+    setEditingId(u.id);
+    setReason(u.reason);
+    setNote(u.note || '');
+    setStartDate(u.startDate);
+    setEndDate(u.endDate);
+    const hasTime = !!(u.startTime && u.endTime);
+    setWholeDay(!hasTime);
+    setStartTime(u.startTime || '');
+    setEndTime(u.endTime || '');
+    setDateError('');
+    setTimeError('');
+  };
+
+  const handleSave = () => {
     if (!player || !startDate || !endDate) return;
     if (dateError || timeError) return;
-    onAdd({
+    const entry: Omit<Unavailability, 'id' | 'createdAt'> = {
       playerId: player.id,
       reason,
       note: note.trim() || undefined,
@@ -123,12 +159,13 @@ export default function UnavailabilityDialog({
       endDate,
       startTime: wholeDay ? undefined : startTime || undefined,
       endTime: wholeDay ? undefined : endTime || undefined,
-    });
-    // Reset form but keep dialog open
-    setNote('');
-    const today = new Date().toISOString().split('T')[0];
-    setStartDate(today);
-    setEndDate(today);
+    };
+    if (editingId) {
+      onEdit(editingId, entry);
+    } else {
+      onAdd(entry);
+    }
+    resetForm();
   };
 
   return (
@@ -148,9 +185,14 @@ export default function UnavailabilityDialog({
                 <ListItem
                   key={u.id}
                   secondaryAction={
-                    <IconButton edge="end" size="small" onClick={() => onDelete(u.id)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
+                    <Box>
+                      <IconButton edge="end" size="small" onClick={() => handleEditStart(u)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton edge="end" size="small" onClick={() => onDelete(u.id)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
                   }
                 >
                   <ListItemText
@@ -177,9 +219,9 @@ export default function UnavailabilityDialog({
           </Box>
         )}
 
-        {/* Add new unavailability */}
+        {/* Add / Edit unavailability */}
         <Typography variant="subtitle2" gutterBottom>
-          {t('unavailability.addNew')}
+          {editingId ? t('unavailability.editEntry') : t('unavailability.addNew')}
         </Typography>
         <Box display="flex" flexDirection="column" gap={2} mt={1}>
           <FormControl fullWidth size="small">
@@ -197,25 +239,19 @@ export default function UnavailabilityDialog({
           </FormControl>
 
           <Box display="flex" gap={2}>
-            <TextField
+            <DatePicker
               label={t('unavailability.startDate')}
-              type="date"
-              value={startDate}
-              onChange={(e) => handleStartDateChange(e.target.value)}
-              size="small"
-              fullWidth
-              slotProps={{ inputLabel: { shrink: true }, htmlInput: { lang: 'sv-SE' } }}
+              value={parseDateStr(startDate)}
+              onChange={(date) => handleStartDateChange(date && isValid(date) ? format(date, 'yyyy-MM-dd') : '')}
+              format="dd-MM-yyyy"
+              slotProps={{ textField: { size: 'small', fullWidth: true } }}
             />
-            <TextField
+            <DatePicker
               label={t('unavailability.endDate')}
-              type="date"
-              value={endDate}
-              onChange={(e) => handleEndDateChange(e.target.value)}
-              size="small"
-              fullWidth
-              error={!!dateError}
-              helperText={dateError}
-              slotProps={{ inputLabel: { shrink: true }, htmlInput: { lang: 'sv-SE' } }}
+              value={parseDateStr(endDate)}
+              onChange={(date) => handleEndDateChange(date && isValid(date) ? format(date, 'yyyy-MM-dd') : '')}
+              format="dd-MM-yyyy"
+              slotProps={{ textField: { size: 'small', fullWidth: true, error: !!dateError, helperText: dateError } }}
             />
           </Box>
 
@@ -228,25 +264,19 @@ export default function UnavailabilityDialog({
 
           {!wholeDay && (
             <Box display="flex" gap={2}>
-              <TextField
+              <TimePicker
                 label={t('unavailability.startTime')}
-                type="time"
-                value={startTime}
-                onChange={(e) => handleStartTimeChange(e.target.value)}
-                size="small"
-                fullWidth
-                slotProps={{ inputLabel: { shrink: true }, htmlInput: { lang: 'sv-SE' } }}
+                value={parseTimeStr(startTime)}
+                onChange={(time) => handleStartTimeChange(time && isValid(time) ? format(time, 'HH:mm') : '')}
+                ampm={false}
+                slotProps={{ textField: { size: 'small', fullWidth: true } }}
               />
-              <TextField
+              <TimePicker
                 label={t('unavailability.endTime')}
-                type="time"
-                value={endTime}
-                onChange={(e) => handleEndTimeChange(e.target.value)}
-                size="small"
-                fullWidth
-                error={!!timeError}
-                helperText={timeError}
-                slotProps={{ inputLabel: { shrink: true }, htmlInput: { lang: 'sv-SE' } }}
+                value={parseTimeStr(endTime)}
+                onChange={(time) => handleEndTimeChange(time && isValid(time) ? format(time, 'HH:mm') : '')}
+                ampm={false}
+                slotProps={{ textField: { size: 'small', fullWidth: true, error: !!timeError, helperText: timeError } }}
               />
             </Box>
           )}
@@ -260,9 +290,20 @@ export default function UnavailabilityDialog({
             rows={2}
           />
 
-          <Button variant="outlined" onClick={handleAdd} disabled={!startDate || !endDate || !!dateError || !!timeError}>
-            {t('unavailability.add')}
-          </Button>
+          <Box display="flex" gap={1}>
+            <Button
+              variant="outlined"
+              onClick={handleSave}
+              disabled={!startDate || !endDate || !!dateError || !!timeError}
+            >
+              {editingId ? t('common.save') : t('unavailability.add')}
+            </Button>
+            {editingId && (
+              <Button variant="text" onClick={resetForm}>
+                {t('common.cancel')}
+              </Button>
+            )}
+          </Box>
         </Box>
       </DialogContent>
       <DialogActions>

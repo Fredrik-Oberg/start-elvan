@@ -28,7 +28,7 @@ export default function RosterPage() {
   const { t } = useTranslation();
   const { players, loading, addPlayer, updatePlayer, deletePlayer } = usePlayers();
   const { traits, addTrait } = useTraits();
-  const { unavailabilities, addUnavailability, deleteUnavailability } = useUnavailability();
+  const { unavailabilities, addUnavailability, updateUnavailability, deleteUnavailability } = useUnavailability();
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -249,6 +249,7 @@ export default function RosterPage() {
         unavailabilities={unavailabilities}
         onClose={() => setUnavailPlayer(null)}
         onAdd={addUnavailability}
+        onEdit={updateUnavailability}
         onDelete={deleteUnavailability}
       />
     </Box>

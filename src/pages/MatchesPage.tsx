@@ -11,10 +11,13 @@ import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Grid2 from '@mui/material/Grid2';
 import Chip from '@mui/material/Chip';
+import Collapse from '@mui/material/Collapse';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useMatches } from '../hooks/useMatches';
 import { useLineup } from '../hooks/useLineup';
@@ -30,6 +33,7 @@ export default function MatchesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Match | null>(null);
+  const [showPast, setShowPast] = useState(false);
 
   const handleSave = async (data: Omit<Match, 'id' | 'createdAt' | 'version'>) => {
     if (editingMatch) {
@@ -53,12 +57,16 @@ export default function MatchesPage() {
     navigate(`/lineup/${matchId}`);
   };
 
-  // Group matches by date
-  const grouped = matches.reduce<Record<string, Match[]>>((acc, match) => {
-    if (!acc[match.date]) acc[match.date] = [];
-    acc[match.date].push(match);
-    return acc;
-  }, {});
+  const today = new Date().toISOString().split('T')[0];
+
+  // Split into upcoming and past, sort upcoming by nearest first
+  const upcomingMatches = matches
+    .filter((m) => m.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+
+  const pastMatches = matches
+    .filter((m) => m.date < today)
+    .sort((a, b) => b.date.localeCompare(a.date) || b.startTime.localeCompare(a.startTime));
 
   if (loading) {
     return (
@@ -67,6 +75,59 @@ export default function MatchesPage() {
       </Box>
     );
   }
+
+  const renderMatchCard = (match: Match, isPast: boolean) => (
+    <Grid2 size={{ xs: 12, sm: 6, md: 4 }} key={match.id}>
+      <Card sx={{ opacity: isPast ? 0.5 : 1 }}>
+        <CardContent>
+          <Typography variant="h6">{match.opponent}</Typography>
+          <Stack direction="row" spacing={1} mt={1}>
+            <Chip
+              label={`${match.startTime} - ${match.endTime}`}
+              size="small"
+              variant="outlined"
+            />
+            {match.location && (
+              <Chip label={match.location} size="small" variant="outlined" />
+            )}
+          </Stack>
+        </CardContent>
+        <CardActions>
+          <Button
+            size="small"
+            startIcon={<PlayArrowIcon />}
+            onClick={() => handleCreateLineup(match.id)}
+          >
+            {t('matches.createLineup')}
+          </Button>
+          <Box flexGrow={1} />
+          <IconButton
+            size="small"
+            onClick={() => {
+              setEditingMatch(match);
+              setDialogOpen(true);
+            }}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => setDeleteTarget(match)}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </CardActions>
+      </Card>
+    </Grid2>
+  );
+
+  // Group matches by date
+  const groupByDate = (matchList: Match[]) =>
+    matchList.reduce<Record<string, Match[]>>((acc, match) => {
+      if (!acc[match.date]) acc[match.date] = [];
+      acc[match.date].push(match);
+      return acc;
+    }, {});
 
   return (
     <Box>
@@ -89,59 +150,51 @@ export default function MatchesPage() {
           {t('matches.noMatches')}
         </Typography>
       ) : (
-        Object.entries(grouped).map(([date, dateMatches]) => (
-          <Box key={date} mb={3}>
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              {date}
+        <>
+          {/* Upcoming matches */}
+          {upcomingMatches.length === 0 ? (
+            <Typography color="text.secondary" mb={2}>
+              {t('matches.noUpcoming')}
             </Typography>
-            <Grid2 container spacing={2}>
-              {dateMatches.map((match) => (
-                <Grid2 size={{ xs: 12, sm: 6, md: 4 }} key={match.id}>
-                  <Card>
-                    <CardContent>
-                      <Typography variant="h6">{match.opponent}</Typography>
-                      <Stack direction="row" spacing={1} mt={1}>
-                        <Chip
-                          label={`${match.startTime} - ${match.endTime}`}
-                          size="small"
-                          variant="outlined"
-                        />
-                        {match.location && (
-                          <Chip label={match.location} size="small" variant="outlined" />
-                        )}
-                      </Stack>
-                    </CardContent>
-                    <CardActions>
-                      <Button
-                        size="small"
-                        startIcon={<PlayArrowIcon />}
-                        onClick={() => handleCreateLineup(match.id)}
-                      >
-                        {t('matches.createLineup')}
-                      </Button>
-                      <Box flexGrow={1} />
-                      <IconButton
-                        size="small"
-                        onClick={() => {
-                          setEditingMatch(match);
-                          setDialogOpen(true);
-                        }}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => setDeleteTarget(match)}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </CardActions>
-                  </Card>
+          ) : (
+            Object.entries(groupByDate(upcomingMatches)).map(([date, dateMatches]) => (
+              <Box key={date} mb={3}>
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  {date}
+                </Typography>
+                <Grid2 container spacing={2}>
+                  {dateMatches.map((match) => renderMatchCard(match, false))}
                 </Grid2>
-              ))}
-            </Grid2>
-          </Box>
-        ))
+              </Box>
+            ))
+          )}
+
+          {/* Past matches - collapsible */}
+          {pastMatches.length > 0 && (
+            <Box mt={4}>
+              <Button
+                onClick={() => setShowPast(!showPast)}
+                startIcon={showPast ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                color="inherit"
+                sx={{ mb: 1 }}
+              >
+                {t('matches.pastMatches')} ({pastMatches.length})
+              </Button>
+              <Collapse in={showPast}>
+                {Object.entries(groupByDate(pastMatches)).map(([date, dateMatches]) => (
+                  <Box key={date} mb={3}>
+                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                      {date}
+                    </Typography>
+                    <Grid2 container spacing={2}>
+                      {dateMatches.map((match) => renderMatchCard(match, true))}
+                    </Grid2>
+                  </Box>
+                ))}
+              </Collapse>
+            </Box>
+          )}
+        </>
       )}
 
       <MatchDialog

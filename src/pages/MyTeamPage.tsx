@@ -41,7 +41,7 @@ export default function MyTeamPage() {
   const { players, loading, addPlayer, updatePlayer, deletePlayer } = usePlayers();
   const { traits, loading: traitsLoading, addTrait, updateTrait, deleteTrait } = useTraits();
   const { teamName, updateTeamName } = useTeamName();
-  const { unavailabilities, addUnavailability, deleteUnavailability } = useUnavailability();
+  const { unavailabilities, addUnavailability, updateUnavailability, deleteUnavailability } = useUnavailability();
 
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState('');
@@ -425,6 +425,7 @@ export default function MyTeamPage() {
         unavailabilities={unavailabilities}
         onClose={() => setUnavailPlayer(null)}
         onAdd={addUnavailability}
+        onEdit={updateUnavailability}
         onDelete={deleteUnavailability}
       />
 

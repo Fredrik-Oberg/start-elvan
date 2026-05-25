@@ -7,7 +7,22 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Box from '@mui/material/Box';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+import { parse, format, isValid } from 'date-fns';
 import type { Match } from '../types';
+
+const parseDateStr = (s: string): Date | null => {
+  if (!s) return null;
+  const d = parse(s, 'yyyy-MM-dd', new Date());
+  return isValid(d) ? d : null;
+};
+
+const parseTimeStr = (s: string): Date | null => {
+  if (!s) return null;
+  const d = parse(s, 'HH:mm', new Date());
+  return isValid(d) ? d : null;
+};
 
 interface MatchDialogProps {
   open: boolean;
@@ -88,34 +103,27 @@ export default function MatchDialog({ open, match, onClose, onSave }: MatchDialo
               required
               autoFocus
             />
-            <TextField
+            <DatePicker
               label={t('matches.date')}
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
-              slotProps={{ inputLabel: { shrink: true }, htmlInput: { lang: 'sv-SE' } }}
+              value={parseDateStr(date)}
+              onChange={(d) => setDate(d && isValid(d) ? format(d, 'yyyy-MM-dd') : '')}
+              format="dd-MM-yyyy"
+              slotProps={{ textField: { required: true, fullWidth: true } }}
             />
             <Box display="flex" gap={2}>
-              <TextField
+              <TimePicker
                 label={t('matches.startTime')}
-                type="time"
-                value={startTime}
-                onChange={(e) => handleStartTimeChange(e.target.value)}
-                required
-                slotProps={{ inputLabel: { shrink: true }, htmlInput: { lang: 'sv-SE' } }}
-                fullWidth
+                value={parseTimeStr(startTime)}
+                onChange={(time) => handleStartTimeChange(time && isValid(time) ? format(time, 'HH:mm') : '')}
+                ampm={false}
+                slotProps={{ textField: { required: true, fullWidth: true } }}
               />
-              <TextField
+              <TimePicker
                 label={t('matches.endTime')}
-                type="time"
-                value={endTime}
-                onChange={(e) => handleEndTimeChange(e.target.value)}
-                required
-                error={!!timeError}
-                helperText={timeError}
-                slotProps={{ inputLabel: { shrink: true }, htmlInput: { lang: 'sv-SE' } }}
-                fullWidth
+                value={parseTimeStr(endTime)}
+                onChange={(time) => handleEndTimeChange(time && isValid(time) ? format(time, 'HH:mm') : '')}
+                ampm={false}
+                slotProps={{ textField: { required: true, fullWidth: true, error: !!timeError, helperText: timeError } }}
               />
             </Box>
             <TextField

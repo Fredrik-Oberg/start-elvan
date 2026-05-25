@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 
 interface TeamContextType {
@@ -45,16 +45,27 @@ export function useTeamName() {
 export function getOrCreateTeamId(): string {
   const KEY = 'start-elvan-team-id';
 
-  // Check URL for shared team ID
+  // Check URL for shared team ID or team name
   const params = new URLSearchParams(window.location.search);
   const sharedTeamId = params.get('team');
+  const sharedTeamName = params.get('teamName');
+
   if (sharedTeamId) {
     localStorage.setItem(KEY, sharedTeamId);
     // Clean URL without reloading
     const url = new URL(window.location.href);
     url.searchParams.delete('team');
+    url.searchParams.delete('teamName');
     window.history.replaceState({}, '', url.toString());
     return sharedTeamId;
+  }
+
+  if (sharedTeamName) {
+    // Store name to resolve async after mount
+    localStorage.setItem('start-elvan-pending-team-name', sharedTeamName);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('teamName');
+    window.history.replaceState({}, '', url.toString());
   }
 
   let teamId = localStorage.getItem(KEY);
@@ -65,10 +76,40 @@ export function getOrCreateTeamId(): string {
   return teamId;
 }
 
-export function getShareUrl(): string {
+/**
+ * Resolves a pending team name from the URL into a team ID by querying Firestore.
+ * Takes the first match if names collide.
+ */
+export function useResolvePendingTeamName(onResolved: (teamId: string) => void) {
+  useEffect(() => {
+    const pendingName = localStorage.getItem('start-elvan-pending-team-name');
+    if (!pendingName) return;
+    localStorage.removeItem('start-elvan-pending-team-name');
+
+    const resolve = async () => {
+      const col = collection(db, 'teams');
+      const q = query(col, where('name', '==', pendingName), limit(1));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const teamId = snap.docs[0].id;
+        localStorage.setItem('start-elvan-team-id', teamId);
+        onResolved(teamId);
+      }
+    };
+    resolve();
+  }, [onResolved]);
+}
+
+export function getShareUrl(mode: 'id' | 'name' = 'id', teamName?: string): string {
   const teamId = localStorage.getItem('start-elvan-team-id') || '';
   const url = new URL(window.location.href);
-  url.searchParams.set('team', teamId);
+  if (mode === 'name' && teamName) {
+    url.searchParams.delete('team');
+    url.searchParams.set('teamName', teamName);
+  } else {
+    url.searchParams.set('team', teamId);
+    url.searchParams.delete('teamName');
+  }
   // Remove any path-based routes for a clean share link
   url.pathname = '/';
   url.hash = '';

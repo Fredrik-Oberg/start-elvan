@@ -23,7 +23,7 @@ import ViewListIcon from '@mui/icons-material/ViewList';
 import LanguageIcon from '@mui/icons-material/Language';
 import ShareIcon from '@mui/icons-material/Share';
 import PeopleIcon from '@mui/icons-material/People';
-import { getShareUrl } from '../hooks/useTeam';
+import { getShareUrl, useTeamName } from '../hooks/useTeam';
 import { usePresence } from '../hooks/usePresence';
 
 const DRAWER_WIDTH = 240;
@@ -40,9 +40,10 @@ export default function Layout({ children }: LayoutProps) {
   const [langAnchor, setLangAnchor] = useState<null | HTMLElement>(null);
   const [shareSnackOpen, setShareSnackOpen] = useState(false);
   const { activeUsers } = usePresence();
+  const { teamName } = useTeamName();
 
   const handleShareTeam = async () => {
-    const url = getShareUrl();
+    const url = teamName ? getShareUrl('name', teamName) : getShareUrl('id');
     await navigator.clipboard.writeText(url);
     setShareSnackOpen(true);
   };
